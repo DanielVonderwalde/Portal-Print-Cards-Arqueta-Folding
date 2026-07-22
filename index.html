@@ -3,25 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arqueta PrintCards - Sistema de Aprobacion</title>
+  <title>Arqueta Folding - Print Card Approval</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
 </head>
 <body>
-  <!-- Loading Screen -->
   <div class="loading-overlay" id="loadingScreen">
-    <div class="logo">ARQUETA<span>PRINT</span></div>
+    <div class="logo">ARQUETA<span>FOLDING</span></div>
     <div class="spinner"></div>
   </div>
 
-  <!-- Auth Page -->
   <div class="auth-page" id="authPage" style="display:none;">
-    <!-- Left Panel - Branding -->
     <div class="auth-left">
       <div class="auth-brand">
-        <div class="logo">ARQUETA<span>PRINT</span></div>
+        <div class="logo">ARQUETA<span>FOLDING</span></div>
         <p class="tagline">Sistema de Aprobacion de Print Cards</p>
         <ul class="feature-list">
           <li>
@@ -52,231 +49,142 @@
       </div>
     </div>
 
-    <!-- Right Panel - Forms -->
     <div class="auth-right">
       <div class="auth-form-container">
-        <!-- LOGIN FORM -->
         <div id="loginForm">
           <h2>Bienvenido</h2>
           <p class="subtitle">Inicia sesion para continuar</p>
-
           <div id="loginError" class="form-error" style="display:none; margin-bottom:16px; padding:12px; background:var(--danger-light); border-radius:var(--radius-md);"></div>
-
           <div class="form-group">
             <label class="form-label">Email</label>
             <input type="email" class="form-input" id="loginEmail" placeholder="tu@email.com" required>
           </div>
-
           <div class="form-group">
             <label class="form-label">Contrasena</label>
             <input type="password" class="form-input" id="loginPassword" placeholder="Tu contrasena" required>
           </div>
-
           <div style="text-align:right; margin-bottom:16px;">
             <a href="#" onclick="showResetForm()" style="font-size:0.8125rem;">Olvide mi contrasena</a>
           </div>
-
-          <button class="btn btn-primary btn-lg" style="width:100%;" onclick="handleLogin()" id="loginBtn">
-            Iniciar Sesion
-          </button>
-
-          <p class="auth-switch">
-            No tienes cuenta? <a href="#" onclick="showRegisterForm()">Registrate</a>
-          </p>
+          <button class="btn btn-primary btn-lg" style="width:100%;" onclick="handleLogin()" id="loginBtn">Iniciar Sesion</button>
+          <p class="auth-switch">No tienes cuenta? <a href="#" onclick="showRegisterForm()">Registrate</a></p>
         </div>
 
-        <!-- REGISTER FORM -->
         <div id="registerForm" style="display:none;">
           <h2>Crear Cuenta</h2>
-          <p class="subtitle">Registrate para acceder al sistema</p>
-
+          <p class="subtitle">Ingresa tu codigo de invitacion para registrarte</p>
           <div id="registerError" class="form-error" style="display:none; margin-bottom:16px; padding:12px; background:var(--danger-light); border-radius:var(--radius-md);"></div>
-
+          <div class="form-group">
+            <label class="form-label">Codigo de Invitacion</label>
+            <input type="text" class="form-input" id="regInviteCode" placeholder="AF-XXXXXX" style="font-family:monospace; font-size:1rem; letter-spacing:2px; text-transform:uppercase;" required>
+            <div style="font-size:0.75rem; color:var(--gray-400); margin-top:4px;">Solicita tu codigo al equipo de Arqueta Folding</div>
+          </div>
           <div class="form-group">
             <label class="form-label">Nombre completo</label>
             <input type="text" class="form-input" id="regName" placeholder="Tu nombre" required>
           </div>
-
           <div class="form-group">
             <label class="form-label">Empresa</label>
             <input type="text" class="form-input" id="regCompany" placeholder="Nombre de tu empresa">
           </div>
-
           <div class="form-group">
             <label class="form-label">Email</label>
             <input type="email" class="form-input" id="regEmail" placeholder="tu@email.com" required>
           </div>
-
           <div class="form-group">
             <label class="form-label">Contrasena</label>
             <input type="password" class="form-input" id="regPassword" placeholder="Minimo 6 caracteres" required>
           </div>
-
-          <div class="form-group">
-            <label class="form-label">Tipo de cuenta</label>
-            <select class="form-select" id="regRole">
-              <option value="client">Cliente</option>
-              <option value="designer">Disenador</option>
-              <option value="admin">Administrador</option>
-            </select>
-          </div>
-
-          <button class="btn btn-primary btn-lg" style="width:100%;" onclick="handleRegister()" id="registerBtn">
-            Crear Cuenta
-          </button>
-
-          <p class="auth-switch">
-            Ya tienes cuenta? <a href="#" onclick="showLoginForm()">Inicia sesion</a>
-          </p>
+          <button class="btn btn-primary btn-lg" style="width:100%;" onclick="handleRegister()" id="registerBtn">Crear Cuenta</button>
+          <p class="auth-switch">Ya tienes cuenta? <a href="#" onclick="showLoginForm()">Inicia sesion</a></p>
         </div>
 
-        <!-- RESET PASSWORD FORM -->
         <div id="resetForm" style="display:none;">
           <h2>Recuperar Contrasena</h2>
           <p class="subtitle">Te enviaremos un email para restablecer tu contrasena</p>
-
           <div class="form-group">
             <label class="form-label">Email</label>
             <input type="email" class="form-input" id="resetEmail" placeholder="tu@email.com" required>
           </div>
-
-          <button class="btn btn-primary btn-lg" style="width:100%;" onclick="handleReset()">
-            Enviar Email
-          </button>
-
-          <p class="auth-switch">
-            <a href="#" onclick="showLoginForm()">Volver al login</a>
-          </p>
+          <button class="btn btn-primary btn-lg" style="width:100%;" onclick="handleReset()">Enviar Email</button>
+          <p class="auth-switch"><a href="#" onclick="showLoginForm()">Volver al login</a></p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-
-  <!-- App Scripts -->
   <script src="js/firebase-config.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/auth.js"></script>
 
   <script>
-    // Form switching
     function showLoginForm() {
       document.getElementById('loginForm').style.display = 'block';
       document.getElementById('registerForm').style.display = 'none';
       document.getElementById('resetForm').style.display = 'none';
     }
-
     function showRegisterForm() {
       document.getElementById('loginForm').style.display = 'none';
       document.getElementById('registerForm').style.display = 'block';
       document.getElementById('resetForm').style.display = 'none';
     }
-
     function showResetForm() {
       document.getElementById('loginForm').style.display = 'none';
       document.getElementById('registerForm').style.display = 'none';
       document.getElementById('resetForm').style.display = 'block';
     }
 
-    // Handle login
     async function handleLogin() {
       const email = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPassword').value;
       const errorDiv = document.getElementById('loginError');
       const btn = document.getElementById('loginBtn');
-
-      if (!email || !password) {
-        errorDiv.textContent = 'Por favor completa todos los campos';
-        errorDiv.style.display = 'block';
-        return;
-      }
-
-      btn.disabled = true;
-      btn.textContent = 'Iniciando...';
-      errorDiv.style.display = 'none';
-
+      if (!email || !password) { errorDiv.textContent = 'Por favor completa todos los campos'; errorDiv.style.display = 'block'; return; }
+      btn.disabled = true; btn.textContent = 'Iniciando...'; errorDiv.style.display = 'none';
       const result = await Auth.login(email, password);
-
-      if (!result.success) {
-        errorDiv.textContent = result.error;
-        errorDiv.style.display = 'block';
-        btn.disabled = false;
-        btn.textContent = 'Iniciar Sesion';
-      }
+      if (!result.success) { errorDiv.textContent = result.error; errorDiv.style.display = 'block'; btn.disabled = false; btn.textContent = 'Iniciar Sesion'; }
     }
 
-    // Handle register
     async function handleRegister() {
+      const inviteCode = document.getElementById('regInviteCode').value.trim().toUpperCase();
       const name = document.getElementById('regName').value.trim();
       const company = document.getElementById('regCompany').value.trim();
       const email = document.getElementById('regEmail').value.trim();
       const password = document.getElementById('regPassword').value;
-      const role = document.getElementById('regRole').value;
       const errorDiv = document.getElementById('registerError');
       const btn = document.getElementById('registerBtn');
-
-      if (!name || !email || !password) {
-        errorDiv.textContent = 'Por favor completa los campos requeridos';
-        errorDiv.style.display = 'block';
-        return;
-      }
-
-      btn.disabled = true;
-      btn.textContent = 'Creando cuenta...';
-      errorDiv.style.display = 'none';
-
-      const result = await Auth.register({ name, company, email, password, role });
-
-      if (!result.success) {
-        errorDiv.textContent = result.error;
-        errorDiv.style.display = 'block';
-        btn.disabled = false;
-        btn.textContent = 'Crear Cuenta';
-      }
+      if (!inviteCode) { errorDiv.textContent = 'Ingresa tu codigo de invitacion'; errorDiv.style.display = 'block'; return; }
+      if (!name || !email || !password) { errorDiv.textContent = 'Por favor completa los campos requeridos'; errorDiv.style.display = 'block'; return; }
+      btn.disabled = true; btn.textContent = 'Validando codigo...'; errorDiv.style.display = 'none';
+      const result = await Auth.register({ name, company, email, password, inviteCode });
+      if (!result.success) { errorDiv.textContent = result.error; errorDiv.style.display = 'block'; btn.disabled = false; btn.textContent = 'Crear Cuenta'; }
     }
 
-    // Handle reset
     async function handleReset() {
       const email = document.getElementById('resetEmail').value.trim();
       if (!email) return;
-
       const result = await Auth.resetPassword(email);
-      if (result.success) {
-        Toast.show('Email de recuperacion enviado', 'success');
-        showLoginForm();
-      } else {
-        Toast.show(result.error, 'error');
-      }
+      if (result.success) { Toast.show('Email de recuperacion enviado', 'success'); showLoginForm(); }
+      else { Toast.show(result.error, 'error'); }
     }
 
-    // Enter key handler
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        if (document.getElementById('loginForm').style.display !== 'none') {
-          handleLogin();
-        } else if (document.getElementById('registerForm').style.display !== 'none') {
-          handleRegister();
-        }
+        if (document.getElementById('loginForm').style.display !== 'none') handleLogin();
+        else if (document.getElementById('registerForm').style.display !== 'none') handleRegister();
       }
     });
 
-    // Auth callbacks
-    Auth.onAuthenticated = function() {
-      // Redirect based on role
-      window.location.href = 'app.html';
-    };
-
+    Auth.onAuthenticated = function() { window.location.href = 'app.html'; };
     Auth.onUnauthenticated = function() {
       document.getElementById('loadingScreen').style.display = 'none';
       document.getElementById('authPage').style.display = 'flex';
     };
 
-    // Initialize
     Toast.init();
     Auth.init();
   </script>
