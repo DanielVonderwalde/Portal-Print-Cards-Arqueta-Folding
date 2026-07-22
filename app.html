@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arqueta PrintCards - Dashboard</title>
+  <title>Arqueta Folding - Print Card Approval</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
@@ -12,7 +12,7 @@
 <body>
   <!-- Loading Screen -->
   <div class="loading-overlay" id="loadingScreen">
-    <div class="logo">ARQUETA<span>PRINT</span></div>
+    <div class="logo">ARQUETA<span>FOLDING</span></div>
     <div class="spinner"></div>
   </div>
 
@@ -20,8 +20,8 @@
     <!-- ============ SIDEBAR ============ -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <div class="logo">ARQUETA<span>PRINT</span></div>
-        <div class="app-name">Print Card Manager</div>
+        <div class="logo">ARQUETA<span>FOLDING</span></div>
+        <div class="app-name">Print Card Approval</div>
       </div>
 
       <nav class="sidebar-nav">
@@ -126,23 +126,44 @@
         <div id="filePreviewList" style="margin-top:16px;"></div>
 
         <div style="margin-top:20px;">
+          <div style="background:var(--info-light); padding:10px 14px; border-radius:var(--radius-md); margin-bottom:16px; font-size:0.8125rem; color:#1e40af;">
+            Los campos se auto-completan del nombre del PDF (formato: AFPC[codigo] [producto] - [cliente].pdf)
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Codigo</label>
+              <input type="text" class="form-input" id="pcCode" placeholder="Ej: AFPC0508">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Cliente</label>
+              <select class="form-select" id="pcClient">
+                <option value="">Selecciona un cliente...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Producto</label>
+              <input type="text" class="form-input" id="pcProducto" placeholder="Nombre del producto">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Sustrato</label>
+              <input type="text" class="form-input" id="pcSustrato" placeholder="Tipo de sustrato">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Barniz</label>
+              <input type="text" class="form-input" id="pcBarniz" placeholder="Tipo de barniz">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fecha</label>
+              <input type="date" class="form-input" id="pcFecha">
+            </div>
+          </div>
           <div class="form-group">
             <label class="form-label">Nombre del Print Card</label>
-            <input type="text" class="form-input" id="pcName" placeholder="Ej: Display SFJ Paradise Pack">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Cliente</label>
-            <select class="form-select" id="pcClient">
-              <option value="">Selecciona un cliente...</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Codigo de referencia</label>
-            <input type="text" class="form-input" id="pcCode" placeholder="Ej: AFPC0508">
+            <input type="text" class="form-input" id="pcName" placeholder="Se auto-genera del archivo">
           </div>
           <div class="form-group">
             <label class="form-label">Notas / Comentarios</label>
-            <textarea class="form-textarea" id="pcNotes" placeholder="Notas adicionales para el cliente..." rows="3"></textarea>
+            <textarea class="form-textarea" id="pcNotes" placeholder="Notas adicionales..." rows="2"></textarea>
           </div>
         </div>
       </div>
@@ -333,7 +354,7 @@
 
     async function renderDashboard(container) {
       const role = Auth.userProfile.role;
-      const isClient = role === 'client';
+      const isClient = role === 'client' || (typeof isClientViewActive !== 'undefined' && isClientViewActive);
 
       // Get stats
       let totalPCs = 0, pendingPCs = 0, approvedPCs = 0, rejectedPCs = 0;
@@ -390,6 +411,39 @@
             </div>
           </div>
         </div>
+
+        ${!isClient ? `
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-lg); margin-bottom:var(--space-xl);">
+          <!-- Ver como Cliente -->
+          <div class="card">
+            <div class="card-body" style="text-align:center; padding:24px;">
+              <h4 style="margin-bottom:8px;">Vista de Cliente</h4>
+              <p style="font-size:0.8125rem; color:var(--gray-500); margin-bottom:16px;">Prueba como se ve el portal para un cliente</p>
+              <button class="btn btn-outline" onclick="toggleClientView()" id="clientViewBtn">
+                ${Icons.eye} Ver como Cliente
+              </button>
+            </div>
+          </div>
+          <!-- Invite Code Generator -->
+          <div class="card">
+            <div class="card-body" style="padding:24px;">
+              <h4 style="margin-bottom:12px;">Generar Codigo de Invitacion</h4>
+              <div style="display:flex; gap:8px; margin-bottom:8px;">
+                <select class="form-select" id="inviteRole" style="flex:1;">
+                  <option value="client">Cliente</option>
+                  <option value="designer">Disenador</option>
+                  <option value="admin">Administrador</option>
+                </select>
+                <button class="btn btn-primary" onclick="generateInviteCode()">Generar</button>
+              </div>
+              <div id="generatedCode" style="display:none; background:var(--gray-50); padding:12px; border-radius:var(--radius-md); text-align:center;">
+                <div style="font-family:monospace; font-size:1.25rem; font-weight:700; letter-spacing:3px; color:var(--accent);" id="codeDisplay"></div>
+                <button class="btn btn-ghost btn-sm" onclick="copyInviteCode()" style="margin-top:8px;">Copiar codigo</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        ` : ''}
 
         <div class="card">
           <div class="card-header">
@@ -862,10 +916,31 @@
         </div>
       `).join('');
 
-      // Auto-fill name from filename
-      if (selectedFiles.length === 1 && !document.getElementById('pcName').value) {
-        const name = selectedFiles[0].name.replace(/\.[^/.]+$/, '').replace(/_/g, ' ');
-        document.getElementById('pcName').value = name;
+      // Auto-extract fields from PDF filename
+      // Pattern: AFPC[code] [product] - [client]_[version].pdf
+      if (selectedFiles.length === 1) {
+        const fileName = selectedFiles[0].name.replace(/\.[^/.]+$/, '');
+        document.getElementById('pcName').value = fileName.replace(/_/g, ' ');
+        
+        // Try to extract code
+        const codeMatch = fileName.match(/^(AFPC\d+)/i);
+        if (codeMatch) document.getElementById('pcCode').value = codeMatch[1];
+        
+        // Try to extract client (after " - ")
+        const clientMatch = fileName.match(/ - ([^_]+)/);
+        // Try to extract product (between code and " - ")
+        const parts = fileName.replace(/^AFPC\d+\s*/, '');
+        const productMatch = parts.match(/^([^-]+?)\s*-/);
+        if (productMatch) {
+          const prodEl = document.getElementById('pcProducto');
+          if (prodEl) prodEl.value = productMatch[1].trim();
+        }
+        
+        // Set today's date
+        const fechaEl = document.getElementById('pcFecha');
+        if (fechaEl && !fechaEl.value) {
+          fechaEl.value = new Date().toISOString().split('T')[0];
+        }
       }
     }
 
@@ -900,6 +975,10 @@
       const clientId = document.getElementById('pcClient').value;
       const code = document.getElementById('pcCode').value.trim();
       const notes = document.getElementById('pcNotes').value.trim();
+      const producto = document.getElementById('pcProducto')?.value?.trim() || '';
+      const sustrato = document.getElementById('pcSustrato')?.value?.trim() || '';
+      const barniz = document.getElementById('pcBarniz')?.value?.trim() || '';
+      const fecha = document.getElementById('pcFecha')?.value || '';
 
       if (!selectedFiles.length) { Toast.show('Selecciona un archivo', 'warning'); return; }
       if (!name) { Toast.show('Ingresa un nombre', 'warning'); return; }
@@ -915,7 +994,19 @@
 
         // Upload file to Storage
         const fileRef = storage.ref(`${STORAGE_PATHS.PRINT_CARDS}/${pcId}/${file.name}`);
-        await fileRef.put(file);
+        const uploadTask = fileRef.put(file);
+        
+        // Track upload progress
+        await new Promise((resolve, reject) => {
+          uploadTask.on('state_changed',
+            (snapshot) => {
+              const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+              btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;"></div> Subiendo... ' + progress + '%';
+            },
+            (error) => reject(error),
+            () => resolve()
+          );
+        });
         const fileURL = await fileRef.getDownloadURL();
 
         // Get client name
@@ -927,6 +1018,10 @@
           name,
           code,
           notes,
+          producto,
+          sustrato,
+          barniz,
+          fecha,
           clientId,
           clientName,
           fileName: file.name,
@@ -970,6 +1065,10 @@
       document.getElementById('pcCode').value = '';
       document.getElementById('pcNotes').value = '';
       document.getElementById('pcClient').value = '';
+      if (document.getElementById('pcProducto')) document.getElementById('pcProducto').value = '';
+      if (document.getElementById('pcSustrato')) document.getElementById('pcSustrato').value = '';
+      if (document.getElementById('pcBarniz')) document.getElementById('pcBarniz').value = '';
+      if (document.getElementById('pcFecha')) document.getElementById('pcFecha').value = '';
       document.getElementById('filePreviewList').innerHTML = '';
       selectedFiles = [];
     }
@@ -1545,6 +1644,83 @@
           filterPrintCards();
         }
       }, 300);
+    }
+
+    // ============================================
+    // INVITE CODE GENERATION
+    // ============================================
+
+    async function generateInviteCode() {
+      const role = document.getElementById('inviteRole').value;
+      const code = 'AF-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+      
+      try {
+        await db.collection('inviteCodes').add({
+          code: code,
+          role: role,
+          used: false,
+          createdBy: Auth.currentUser.uid,
+          createdByName: Auth.userProfile.name,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        document.getElementById('codeDisplay').textContent = code;
+        document.getElementById('generatedCode').style.display = 'block';
+        Toast.show('Codigo generado: ' + code, 'success');
+      } catch(e) {
+        console.error(e);
+        Toast.show('Error al generar codigo', 'error');
+      }
+    }
+
+    function copyInviteCode() {
+      const code = document.getElementById('codeDisplay').textContent;
+      navigator.clipboard.writeText(code).then(() => {
+        Toast.show('Codigo copiado al portapapeles', 'success');
+      });
+    }
+
+    // ============================================
+    // CLIENT VIEW TOGGLE (Admin feature)
+    // ============================================
+
+    let isClientViewActive = false;
+
+    function toggleClientView() {
+      isClientViewActive = !isClientViewActive;
+      const btn = document.getElementById('clientViewBtn');
+      
+      if (isClientViewActive) {
+        // Show yellow banner
+        let banner = document.getElementById('clientViewBanner');
+        if (!banner) {
+          banner = document.createElement('div');
+          banner.id = 'clientViewBanner';
+          banner.style.cssText = 'background:#fbbf24; color:#78350f; padding:8px 16px; text-align:center; font-weight:600; font-size:0.875rem; position:sticky; top:0; z-index:999;';
+          banner.innerHTML = 'Vista de Cliente activa - <a href="#" onclick="toggleClientView(); return false;" style="color:#78350f; text-decoration:underline;">Volver a vista Admin</a>';
+          document.querySelector('.main-content').prepend(banner);
+        }
+        
+        // Hide admin sections
+        document.getElementById('adminSection').style.display = 'none';
+        document.getElementById('clientsNav').style.display = 'none';
+        document.getElementById('uploadNav').style.display = 'none';
+        document.getElementById('usersNav').style.display = 'none';
+        btn.innerHTML = Icons.eye + ' Volver a Admin';
+        navigateTo('dashboard');
+      } else {
+        // Remove banner
+        const banner = document.getElementById('clientViewBanner');
+        if (banner) banner.remove();
+        
+        // Show admin sections
+        document.getElementById('adminSection').style.display = '';
+        document.getElementById('clientsNav').style.display = '';
+        document.getElementById('uploadNav').style.display = '';
+        document.getElementById('usersNav').style.display = '';
+        btn.innerHTML = Icons.eye + ' Ver como Cliente';
+        navigateTo('dashboard');
+      }
     }
 
     // ============================================
