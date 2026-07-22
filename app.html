@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>ð</text></svg>">
 </head>
 <body>
   <!-- Loading Screen -->
@@ -280,7 +280,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
   <!-- PDF.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -630,7 +629,7 @@
 
       // Load PDF thumbnails
       cards.forEach(pc => {
-        if (pc.fileURL) loadPDFThumbnail(pc.id, pc.fileURL);
+        if (pc.fileData) loadPDFThumbnail(pc.id, pc.fileData);
       });
     }
 
@@ -860,7 +859,7 @@
         `;
 
         openModal('detailModal');
-        loadPDFViewer(pc.fileURL);
+        loadPDFViewer(pc.fileData);
         loadComments(id);
 
       } catch(e) {
@@ -992,23 +991,13 @@
         const file = selectedFiles[0];
         const pcId = db.collection(COLLECTIONS.PRINT_CARDS).doc().id;
 
-        // Upload file to Storage
-        const fileRef = storage.ref(`${STORAGE_PATHS.PRINT_CARDS}/${pcId}/${file.name}`);
-        const uploadTask = fileRef.put(file);
-        
-        // Track upload progress
-        await new Promise((resolve, reject) => {
-          const uploadTimeout = setTimeout(() => reject(new Error('Upload timeout - Firebase Storage may not be enabled. Upgrade to Blaze plan.')), 30000);
-          uploadTask.on('state_changed',
-            (snapshot) => {
-              const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-              btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;"></div> Subiendo... ' + progress + '%';
-            },
-            (error) => { clearTimeout(uploadTimeout); reject(error); },
-            () => { clearTimeout(uploadTimeout); resolve(); }
-          );
-        });
-        const fileURL = await fileRef.getDownloadURL();
+        // Read file as base64 data URL (no Firebase Storage needed)
+          const fileData = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error('Error reading file'));
+            reader.readAsDataURL(file);
+          });
 
         // Get client name
         const clientDoc = await db.collection(COLLECTIONS.CLIENTS).doc(clientId).get();
@@ -1026,7 +1015,7 @@
           clientId,
           clientName,
           fileName: file.name,
-          fileURL,
+          fileData,
           fileSize: file.size,
           fileType: file.type,
           status: 'draft',
@@ -1618,8 +1607,8 @@
     async function downloadPrintCard(id) {
       try {
         const doc = await db.collection(COLLECTIONS.PRINT_CARDS).doc(id).get();
-        if (doc.exists && doc.data().fileURL) {
-          window.open(doc.data().fileURL, '_blank');
+        if (doc.exists && doc.data().fileData) {
+          window.open(doc.data().fileData, '_blank');
         }
       } catch(e) {
         Toast.show('Error al descargar', 'error');
