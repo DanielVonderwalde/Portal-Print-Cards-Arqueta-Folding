@@ -998,13 +998,14 @@
         
         // Track upload progress
         await new Promise((resolve, reject) => {
+          const uploadTimeout = setTimeout(() => reject(new Error('Upload timeout - Firebase Storage may not be enabled. Upgrade to Blaze plan.')), 30000);
           uploadTask.on('state_changed',
             (snapshot) => {
               const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
               btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;"></div> Subiendo... ' + progress + '%';
             },
-            (error) => reject(error),
-            () => resolve()
+            (error) => { clearTimeout(uploadTimeout); reject(error); },
+            () => { clearTimeout(uploadTimeout); resolve(); }
           );
         });
         const fileURL = await fileRef.getDownloadURL();
@@ -1529,6 +1530,8 @@
           } else if (badge) {
             badge.style.display = 'none';
           }
+        }, error => {
+          console.error('Notification listener error:', error);
         });
     }
 
@@ -1766,3 +1769,4 @@
   </script>
 </body>
 </html>
+
