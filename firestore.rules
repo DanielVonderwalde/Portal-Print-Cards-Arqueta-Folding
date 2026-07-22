@@ -52,7 +52,7 @@ service cloud.firestore {
     match /signatures/{signatureId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
-      allow update: if false; // Signatures are immutable
+      allow update: if false;
       allow delete: if false;
     }
 
@@ -60,7 +60,7 @@ service cloud.firestore {
     match /auditLog/{logId} {
       allow read: if isDesigner();
       allow create: if isAuthenticated();
-      allow update: if false; // Audit logs are immutable
+      allow update: if false;
       allow delete: if false;
     }
 
@@ -87,5 +87,14 @@ service cloud.firestore {
       allow update: if isAuthenticated();
       allow delete: if isAdmin();
     }
+
+    // Invite Codes collection
+    match /inviteCodes/{codeId} {
+      allow read: if true;
+      allow create: if isDesigner();
+      allow update: if true;
+      allow delete: if isAdmin();
+    }
   }
 }
+
