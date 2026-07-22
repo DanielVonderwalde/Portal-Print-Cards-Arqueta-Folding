@@ -1,0 +1,1592 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arqueta PrintCards - Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div class="loading-overlay" id="loadingScreen">
+    <div class="logo">ARQUETA<span>PRINT</span></div>
+    <div class="spinner"></div>
+  </div>
+
+  <div class="app-layout" id="appLayout" style="display:none;">
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">ARQUETA<span>PRINT</span></div>
+        <div class="app-name">Print Card Manager</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">Principal</div>
+        <div class="nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')">
+          <span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span> Dashboard
+        </div>
+        <div class="nav-item" data-page="printcards" onclick="navigateTo('printcards')">
+          <span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span> Print Cards
+          <span class="badge" id="pendingBadge" style="display:none;">0</span>
+        </div>
+
+        <div class="nav-section" id="adminSection">Gestion</div>
+        <div class="nav-item" data-page="clients" onclick="navigateTo('clients')" id="clientsNav">
+          <span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Clientes
+        </div>
+        <div class="nav-item" data-page="upload" onclick="navigateTo('upload')" id="uploadNav">
+          <span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span> Subir Print Card
+        </div>
+        <div class="nav-item" data-page="users" onclick="navigateTo('users')" id="usersNav">
+          <span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Usuarios
+        </div>
+
+        <div class="nav-section">Cuenta</div>
+        <div class="nav-item" data-page="settings" onclick="navigateTo('settings')">
+          <span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span> Configuracion
+        </div>
+        <div class="nav-item" onclick="handleLogout()">
+          <span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span> Cerrar Sesion
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar" id="sidebarAvatar">?</div>
+          <div class="user-details">
+            <div class="user-name" id="sidebarName">-</div>
+            <div class="user-role" id="sidebarRole">-</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ============ MAIN CONTENT ============ -->
+    <main class="main-content">
+      <!-- Top Bar -->
+      <header class="top-bar">
+        <div class="top-bar-left">
+          <button class="menu-toggle" onclick="toggleSidebar()">
+            <span><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></span>
+          </button>
+          <div class="breadcrumb" id="breadcrumb">
+            <span>Dashboard</span>
+          </div>
+        </div>
+        <div class="top-bar-right">
+          <div class="search-bar" style="width:250px;">
+            <span class="search-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+            <input type="text" class="form-input" placeholder="Buscar print cards..." id="globalSearch" oninput="handleGlobalSearch(this.value)">
+          </div>
+          <button class="notification-bell" onclick="toggleNotifications()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="dot" id="notifDot" style="display:none;"></span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Page Content Container -->
+      <div class="page-content" id="pageContent">
+        <!-- Content loaded dynamically -->
+      </div>
+    </main>
+
+    <!-- ============ NOTIFICATION PANEL ============ -->
+    <div class="notification-panel" id="notifPanel">
+      <div class="notification-panel-header">
+        <h3>Notificaciones</h3>
+        <button class="btn btn-ghost btn-sm" onclick="markAllRead()">Marcar todo leido</button>
+      </div>
+      <ul class="notification-list" id="notifList">
+        <li style="padding:32px; text-align:center; color:var(--gray-400);">Sin notificaciones</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ============ MODALS ============ -->
+
+  <!-- Upload Modal -->
+  <div class="modal-overlay" id="uploadModal">
+    <div class="modal" style="max-width:650px;">
+      <div class="modal-header">
+        <h3>Subir Print Card</h3>
+        <button class="modal-close" onclick="closeModal('uploadModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+          <div class="upload-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+          <p>Arrastra tu PDF aqui o <span class="browse-link">selecciona un archivo</span></p>
+          <p style="font-size:0.8125rem; color:var(--gray-400); margin-top:8px;">PDF, PNG, JPG - Max 50MB</p>
+          <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg" multiple style="display:none;" onchange="handleFileSelect(this.files)">
+        </div>
+        <div id="filePreviewList" style="margin-top:16px;"></div>
+
+        <div style="margin-top:20px;">
+          <div class="form-group">
+            <label class="form-label">Nombre del Print Card</label>
+            <input type="text" class="form-input" id="pcName" placeholder="Ej: Display SFJ Paradise Pack">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cliente</label>
+            <select class="form-select" id="pcClient">
+              <option value="">Selecciona un cliente...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Codigo de referencia</label>
+            <input type="text" class="form-input" id="pcCode" placeholder="Ej: AFPC0508">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notas / Comentarios</label>
+            <textarea class="form-textarea" id="pcNotes" placeholder="Notas adicionales para el cliente..." rows="3"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('uploadModal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="uploadPrintCard()" id="uploadBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Subir Print Card
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Print Card Detail Modal -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal" style="max-width:900px; max-height:95vh;">
+      <div class="modal-header">
+        <h3 id="detailTitle">Print Card</h3>
+        <button class="modal-close" onclick="closeModal('detailModal')">&times;</button>
+      </div>
+      <div class="modal-body" id="detailBody">
+        <!-- Loaded dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Signature Modal -->
+  <div class="modal-overlay" id="signModal">
+    <div class="modal" style="max-width:650px;">
+      <div class="modal-header">
+        <h3>Firmar Print Card</h3>
+        <button class="modal-close" onclick="closeModal('signModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="background:var(--info-light); padding:12px 16px; border-radius:var(--radius-md); margin-bottom:20px; font-size:0.875rem; color:#1e40af;">
+          Al firmar este documento, confirmas que has revisado el print card y das tu aprobacion o rechazo para produccion.
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tu nombre completo</label>
+          <input type="text" class="form-input" id="signName" placeholder="Nombre como aparecera en el certificado">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Titulo / Cargo</label>
+          <input type="text" class="form-input" id="signTitle" placeholder="Ej: Director de Marketing">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Comentarios (opcional)</label>
+          <textarea class="form-textarea" id="signComments" placeholder="Agrega observaciones..." rows="2"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tu firma</label>
+          <div class="signature-area">
+            <canvas class="signature-canvas" id="signatureCanvas"></canvas>
+            <div class="signature-actions">
+              <button class="btn btn-outline btn-sm" onclick="clearSignature()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Limpiar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:var(--gray-50); padding:12px 16px; border-radius:var(--radius-md); font-size:0.8125rem; color:var(--gray-500);">
+          <strong>Certificado digital:</strong> Se registrara la fecha, hora, tu nombre e informacion del navegador como prueba de autenticidad.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger" onclick="submitSignature('rejected')" id="rejectBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Rechazar
+        </button>
+        <button class="btn btn-success" onclick="submitSignature('approved')" id="approveBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Aprobar y Firmar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Client Modal -->
+  <div class="modal-overlay" id="clientModal">
+    <div class="modal" style="max-width:500px;">
+      <div class="modal-header">
+        <h3>Nuevo Cliente</h3>
+        <button class="modal-close" onclick="closeModal('clientModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Nombre de la empresa</label>
+          <input type="text" class="form-input" id="clientCompany" placeholder="Nombre del cliente">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nombre del contacto</label>
+          <input type="text" class="form-input" id="clientContact" placeholder="Nombre del contacto principal">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="clientEmail" placeholder="email@cliente.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Telefono</label>
+          <input type="text" class="form-input" id="clientPhone" placeholder="+52 55 1234 5678">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('clientModal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="createClient()">Crear Cliente</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlay for notifications panel -->
+  <div id="notifOverlay" style="display:none; position:fixed; inset:0; z-index:150;" onclick="toggleNotifications()"></div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+  <!-- PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (typeof pdfjsLib !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  </script>
+
+  <!-- App Scripts -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/signature.js"></script>
+
+  <script>
+    // ============================================
+    // APP STATE & NAVIGATION
+    // ============================================
+
+    let currentPage = 'dashboard';
+    let clients = [];
+    let printCards = [];
+    let selectedFiles = [];
+    let currentPrintCardId = null;
+    let unsubscribeNotifications = null;
+
+    // Navigation
+    function navigateTo(page) {
+      currentPage = page;
+
+      // Update nav
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.page === page);
+      });
+
+      // Update breadcrumb
+      const names = {
+        dashboard: 'Dashboard',
+        printcards: 'Print Cards',
+        clients: 'Clientes',
+        upload: 'Subir Print Card',
+        users: 'Usuarios',
+        settings: 'Configuracion'
+      };
+      document.getElementById('breadcrumb').innerHTML = `
+        <span style="cursor:pointer" onclick="navigateTo('dashboard')">Inicio</span>
+        ${page !== 'dashboard' ? `<span>${Icons.chevronRight}</span><span class="current">${names[page] || page}</span>` : '<span class="current">Dashboard</span>'}
+      `;
+
+      // Render page
+      renderPage(page);
+    }
+
+    function renderPage(page) {
+      const container = document.getElementById('pageContent');
+      switch(page) {
+        case 'dashboard': renderDashboard(container); break;
+        case 'printcards': renderPrintCards(container); break;
+        case 'clients': renderClients(container); break;
+        case 'upload': openModal('uploadModal'); navigateTo('printcards'); break;
+        case 'users': renderUsers(container); break;
+        case 'settings': renderSettings(container); break;
+        default: renderDashboard(container);
+      }
+    }
+
+    // ============================================
+    // DASHBOARD
+    // ============================================
+
+    async function renderDashboard(container) {
+      const role = Auth.userProfile.role;
+      const isClient = role === 'client';
+
+      // Get stats
+      let totalPCs = 0, pendingPCs = 0, approvedPCs = 0, rejectedPCs = 0;
+      try {
+        let query = db.collection(COLLECTIONS.PRINT_CARDS);
+        if (isClient) {
+          query = query.where('clientId', '==', Auth.currentUser.uid);
+        }
+        const snapshot = await query.get();
+        totalPCs = snapshot.size;
+        snapshot.forEach(doc => {
+          const d = doc.data();
+          if (d.status === 'pending' || d.status === 'sent') pendingPCs++;
+          else if (d.status === 'approved') approvedPCs++;
+          else if (d.status === 'rejected') rejectedPCs++;
+        });
+      } catch(e) { console.error(e); }
+
+      container.innerHTML = `
+        <div style="margin-bottom:var(--space-xl);">
+          <h1>Hola, ${Auth.userProfile.name.split(' ')[0]}</h1>
+          <p style="color:var(--gray-500); margin-top:4px;">
+            ${isClient ? 'Aqui puedes ver y aprobar tus print cards' : 'Resumen de actividad de print cards'}
+          </p>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon blue">${Icons.printCard}</div>
+            <div class="stat-info">
+              <h3>${totalPCs}</h3>
+              <p>Total Print Cards</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon yellow">${Icons.clock}</div>
+            <div class="stat-info">
+              <h3>${pendingPCs}</h3>
+              <p>Pendientes</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">${Icons.check}</div>
+            <div class="stat-info">
+              <h3>${approvedPCs}</h3>
+              <p>Aprobados</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon red">${Icons.x}</div>
+            <div class="stat-info">
+              <h3>${rejectedPCs}</h3>
+              <p>Rechazados</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>${isClient ? 'Tus Print Cards Pendientes' : 'Print Cards Recientes'}</h3>
+            ${!isClient ? `<button class="btn btn-primary btn-sm" onclick="openModal('uploadModal')">${Icons.plus} Nuevo</button>` : ''}
+          </div>
+          <div class="card-body" style="padding:0;">
+            <div class="table-container">
+              <table class="data-table" id="recentTable">
+                <thead>
+                  <tr>
+                    <th>Print Card</th>
+                    <th>Codigo</th>
+                    ${!isClient ? '<th>Cliente</th>' : ''}
+                    <th>Estado</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="recentTableBody">
+                  <tr><td colspan="${isClient ? 5 : 6}" style="text-align:center; padding:32px; color:var(--gray-400);">Cargando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+
+      loadRecentPrintCards(isClient);
+    }
+
+    async function loadRecentPrintCards(isClient) {
+      try {
+        let query = db.collection(COLLECTIONS.PRINT_CARDS)
+          .orderBy('createdAt', 'desc')
+          .limit(10);
+
+        if (isClient) {
+          query = db.collection(COLLECTIONS.PRINT_CARDS)
+            .where('clientId', '==', Auth.currentUser.uid)
+            .orderBy('createdAt', 'desc')
+            .limit(10);
+        }
+
+        const snapshot = await query.get();
+        const tbody = document.getElementById('recentTableBody');
+
+        if (snapshot.empty) {
+          tbody.innerHTML = `<tr><td colspan="${isClient ? 5 : 6}" style="text-align:center; padding:32px; color:var(--gray-400);">
+            No hay print cards aun. ${!isClient ? 'Sube el primero!' : ''}
+          </td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = '';
+        snapshot.forEach(doc => {
+          const d = doc.data();
+          tbody.innerHTML += `
+            <tr>
+              <td>
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <div style="width:40px; height:40px; background:var(--gray-100); border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; color:var(--gray-400); flex-shrink:0;">
+                    ${Icons.printCard}
+                  </div>
+                  <div>
+                    <div style="font-weight:600; font-size:0.875rem;">${truncate(d.name, 35)}</div>
+                  </div>
+                </div>
+              </td>
+              <td><span style="font-family:monospace; font-size:0.8125rem; color:var(--gray-500);">${d.code || '-'}</span></td>
+              ${!isClient ? `<td style="font-size:0.875rem;">${d.clientName || '-'}</td>` : ''}
+              <td><span class="status-badge ${d.status}">${statusLabel(d.status)}</span></td>
+              <td style="font-size:0.8125rem; color:var(--gray-500);">${formatDate(d.createdAt)}</td>
+              <td>
+                <div style="display:flex; gap:4px;">
+                  <button class="btn btn-ghost btn-sm btn-icon" title="Ver" onclick="viewPrintCard('${doc.id}')">${Icons.eye}</button>
+                  ${(isClient && (d.status === 'sent' || d.status === 'pending')) ?
+                    `<button class="btn btn-success btn-sm" onclick="openSignModal('${doc.id}')">${Icons.sign} Firmar</button>` :
+                    `<button class="btn btn-ghost btn-sm btn-icon" title="Enviar" onclick="sendToClient('${doc.id}')">${Icons.send}</button>`
+                  }
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+      } catch(e) {
+        console.error('Error loading print cards:', e);
+      }
+    }
+
+    // ============================================
+    // PRINT CARDS LIST
+    // ============================================
+
+    async function renderPrintCards(container) {
+      const isClient = Auth.userProfile.role === 'client';
+
+      container.innerHTML = `
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-xl);">
+          <h1>Print Cards</h1>
+          ${!isClient ? `<button class="btn btn-primary" onclick="openModal('uploadModal')">${Icons.plus} Nuevo Print Card</button>` : ''}
+        </div>
+
+        <div class="filter-bar">
+          <div class="search-bar" style="flex:1; max-width:350px;">
+            <span class="search-icon">${Icons.search}</span>
+            <input type="text" class="form-input" placeholder="Buscar por nombre o codigo..." id="pcSearch" oninput="filterPrintCards()">
+          </div>
+          <select class="form-select" id="pcStatusFilter" onchange="filterPrintCards()">
+            <option value="">Todos los estados</option>
+            <option value="draft">Borrador</option>
+            <option value="sent">Enviado</option>
+            <option value="pending">Pendiente</option>
+            <option value="approved">Aprobado</option>
+            <option value="rejected">Rechazado</option>
+          </select>
+          ${!isClient ? `
+          <select class="form-select" id="pcClientFilter" onchange="filterPrintCards()">
+            <option value="">Todos los clientes</option>
+          </select>` : ''}
+        </div>
+
+        <div class="printcard-grid" id="pcGrid">
+          <div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--gray-400);">
+            <div class="spinner" style="margin:0 auto 16px;"></div>
+            Cargando print cards...
+          </div>
+        </div>
+      `;
+
+      await loadPrintCardsList(isClient);
+      if (!isClient) loadClientFilter();
+    }
+
+    async function loadPrintCardsList(isClient) {
+      try {
+        let query = db.collection(COLLECTIONS.PRINT_CARDS).orderBy('createdAt', 'desc');
+        if (isClient) {
+          query = db.collection(COLLECTIONS.PRINT_CARDS)
+            .where('clientId', '==', Auth.currentUser.uid)
+            .orderBy('createdAt', 'desc');
+        }
+
+        const snapshot = await query.get();
+        printCards = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderPrintCardGrid(printCards);
+      } catch(e) {
+        console.error(e);
+        document.getElementById('pcGrid').innerHTML = '<p style="color:var(--danger);">Error cargando print cards</p>';
+      }
+    }
+
+    function renderPrintCardGrid(cards) {
+      const grid = document.getElementById('pcGrid');
+      if (!grid) return;
+
+      if (cards.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state" style="grid-column:1/-1;">
+            <div class="empty-icon">${Icons.printCard}</div>
+            <h3>No hay print cards</h3>
+            <p>Sube tu primer print card para comenzar el proceso de aprobacion</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = cards.map(pc => `
+        <div class="printcard-item" onclick="viewPrintCard('${pc.id}')">
+          <div class="printcard-preview" id="preview-${pc.id}">
+            <div class="pdf-icon">${Icons.printCard}</div>
+          </div>
+          <div class="printcard-info">
+            <h4>${truncate(pc.name, 40)}</h4>
+            <div style="font-family:monospace; font-size:0.75rem; color:var(--gray-400);">${pc.code || ''}</div>
+            <div class="printcard-meta">
+              <span class="status-badge ${pc.status}">${statusLabel(pc.status)}</span>
+              <span class="date">${formatDate(pc.createdAt)}</span>
+            </div>
+            ${pc.clientName ? `<div class="client" style="font-size:0.8125rem; color:var(--gray-500); margin-top:8px;">${Icons.clients} ${pc.clientName}</div>` : ''}
+          </div>
+        </div>
+      `).join('');
+
+      // Load PDF thumbnails
+      cards.forEach(pc => {
+        if (pc.fileURL) loadPDFThumbnail(pc.id, pc.fileURL);
+      });
+    }
+
+    async function loadPDFThumbnail(id, url) {
+      try {
+        const container = document.getElementById(`preview-${id}`);
+        if (!container) return;
+
+        const pdf = await pdfjsLib.getDocument(url).promise;
+        const page = await pdf.getPage(1);
+        const viewport = page.getViewport({ scale: 0.5 });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+        container.innerHTML = '';
+        container.appendChild(canvas);
+      } catch(e) {
+        // Keep default icon
+      }
+    }
+
+    function filterPrintCards() {
+      const search = (document.getElementById('pcSearch')?.value || '').toLowerCase();
+      const status = document.getElementById('pcStatusFilter')?.value || '';
+      const clientId = document.getElementById('pcClientFilter')?.value || '';
+
+      let filtered = printCards;
+      if (search) {
+        filtered = filtered.filter(pc =>
+          (pc.name || '').toLowerCase().includes(search) ||
+          (pc.code || '').toLowerCase().includes(search)
+        );
+      }
+      if (status) {
+        filtered = filtered.filter(pc => pc.status === status);
+      }
+      if (clientId) {
+        filtered = filtered.filter(pc => pc.clientId === clientId);
+      }
+
+      renderPrintCardGrid(filtered);
+    }
+
+    // ============================================
+    // VIEW PRINT CARD DETAIL
+    // ============================================
+
+    async function viewPrintCard(id) {
+      currentPrintCardId = id;
+      const isClient = Auth.userProfile.role === 'client';
+
+      try {
+        const doc = await db.collection(COLLECTIONS.PRINT_CARDS).doc(id).get();
+        if (!doc.exists) { Toast.show('Print card no encontrado', 'error'); return; }
+        const pc = doc.data();
+
+        // Log view
+        AuditLog.log({
+          action: 'printcard_viewed',
+          userId: Auth.currentUser.uid,
+          printCardId: id,
+          details: { name: pc.name }
+        });
+
+        document.getElementById('detailTitle').textContent = pc.name;
+
+        // Get signatures
+        const signatures = await SignatureService.getSignatures(id);
+
+        // Get audit log
+        const auditLogs = await AuditLog.getForPrintCard(id);
+
+        document.getElementById('detailBody').innerHTML = `
+          <div class="detail-grid">
+            <div>
+              <!-- PDF Viewer -->
+              <div class="pdf-viewer-container" id="pdfViewer" style="min-height:500px;">
+                <div class="spinner"></div>
+              </div>
+
+              <!-- Tabs -->
+              <div style="margin-top:24px;">
+                <div class="tabs">
+                  <div class="tab active" onclick="switchDetailTab('info', this)">Informacion</div>
+                  <div class="tab" onclick="switchDetailTab('signatures', this)">Firmas (${signatures.length})</div>
+                  <div class="tab" onclick="switchDetailTab('audit', this)">Historial</div>
+                  <div class="tab" onclick="switchDetailTab('comments', this)">Comentarios</div>
+                </div>
+
+                <div class="tab-content active" id="tab-info">
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                    <div class="info-row" style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--gray-100);">
+                      <span style="color:var(--gray-500);">Codigo</span>
+                      <span style="font-weight:600; font-family:monospace;">${pc.code || '-'}</span>
+                    </div>
+                    <div class="info-row" style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--gray-100);">
+                      <span style="color:var(--gray-500);">Estado</span>
+                      <span class="status-badge ${pc.status}">${statusLabel(pc.status)}</span>
+                    </div>
+                    <div class="info-row" style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--gray-100);">
+                      <span style="color:var(--gray-500);">Cliente</span>
+                      <span style="font-weight:600;">${pc.clientName || '-'}</span>
+                    </div>
+                    <div class="info-row" style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--gray-100);">
+                      <span style="color:var(--gray-500);">Creado</span>
+                      <span>${formatDateTime(pc.createdAt)}</span>
+                    </div>
+                  </div>
+                  ${pc.notes ? `<div style="margin-top:16px; padding:12px; background:var(--gray-50); border-radius:var(--radius-md);"><strong>Notas:</strong> ${pc.notes}</div>` : ''}
+                </div>
+
+                <div class="tab-content" id="tab-signatures">
+                  ${signatures.length === 0 ? `
+                    <div class="empty-state" style="padding:24px;">
+                      <p style="color:var(--gray-400);">No hay firmas registradas aun</p>
+                    </div>
+                  ` : signatures.map(sig => `
+                    <div class="signature-certificate">
+                      <div class="certificate-header">
+                        <div class="certificate-seal">${sig.status === 'approved' ? Icons.check : Icons.x}</div>
+                        <div class="certificate-info">
+                          <h4 style="color:${sig.status === 'approved' ? 'var(--success)' : 'var(--danger)'};">
+                            ${sig.status === 'approved' ? 'Aprobado' : 'Rechazado'}
+                          </h4>
+                          <p>Certificado de firma digital</p>
+                        </div>
+                      </div>
+                      <div class="certificate-details">
+                        <div class="certificate-field">
+                          <label>Firmado por</label>
+                          <p>${sig.signerName}</p>
+                        </div>
+                        <div class="certificate-field">
+                          <label>Email</label>
+                          <p>${sig.signerEmail}</p>
+                        </div>
+                        <div class="certificate-field">
+                          <label>Cargo</label>
+                          <p>${sig.signerTitle || '-'}</p>
+                        </div>
+                        <div class="certificate-field">
+                          <label>Fecha y hora</label>
+                          <p>${formatDateTime(sig.signedAt)}</p>
+                        </div>
+                        <div class="certificate-field" style="grid-column:1/-1;">
+                          <label>Hash de verificacion</label>
+                          <p style="font-family:monospace; font-size:0.75rem; word-break:break-all;">${sig.hash || '-'}</p>
+                        </div>
+                      </div>
+                      ${sig.comments ? `<div style="margin-top:12px; padding:8px 12px; background:var(--white); border-radius:var(--radius-md); font-size:0.875rem;"><strong>Comentarios:</strong> ${sig.comments}</div>` : ''}
+                      ${sig.signatureImageURL ? `
+                        <div class="signature-image">
+                          <img src="${sig.signatureImageURL}" alt="Firma">
+                        </div>
+                      ` : ''}
+                    </div>
+                  `).join('')}
+                </div>
+
+                <div class="tab-content" id="tab-audit">
+                  <div class="audit-trail">
+                    ${auditLogs.length === 0 ? '<p style="color:var(--gray-400);">Sin registros</p>' :
+                    auditLogs.map(log => `
+                      <div class="audit-item ${log.action.includes('approved') ? 'signed' : log.action.includes('rejected') ? 'rejected' : log.action.includes('sent') ? 'sent' : log.action.includes('viewed') ? 'viewed' : 'created'}">
+                        <div class="audit-time">${formatDateTime(log.timestamp)}</div>
+                        <div class="audit-text">${auditActionLabel(log.action)}</div>
+                        <div class="audit-detail">${log.details?.signerName || log.details?.email || ''}</div>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+
+                <div class="tab-content" id="tab-comments">
+                  <div id="commentsContainer">Cargando...</div>
+                  <div style="margin-top:16px; display:flex; gap:8px;">
+                    <input type="text" class="form-input" id="commentInput" placeholder="Escribe un comentario...">
+                    <button class="btn btn-primary" onclick="addComment('${id}')">${Icons.send}</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right sidebar -->
+            <div class="detail-sidebar">
+              <div class="card">
+                <div class="card-body">
+                  <h4 style="margin-bottom:16px;">Acciones</h4>
+
+                  ${(isClient && (pc.status === 'sent' || pc.status === 'pending')) ? `
+                    <button class="btn btn-success" style="width:100%; margin-bottom:8px;" onclick="closeModal('detailModal'); openSignModal('${id}')">
+                      ${Icons.sign} Firmar / Aprobar
+                    </button>
+                  ` : ''}
+
+                  ${!isClient && pc.status === 'draft' ? `
+                    <button class="btn btn-primary" style="width:100%; margin-bottom:8px;" onclick="sendToClient('${id}')">
+                      ${Icons.send} Enviar a Cliente
+                    </button>
+                  ` : ''}
+
+                  <button class="btn btn-outline" style="width:100%; margin-bottom:8px;" onclick="downloadPrintCard('${id}')">
+                    ${Icons.download} Descargar PDF
+                  </button>
+
+                  ${!isClient ? `
+                    <button class="btn btn-ghost" style="width:100%; color:var(--danger);" onclick="deletePrintCard('${id}')">
+                      ${Icons.trash} Eliminar
+                    </button>
+                  ` : ''}
+                </div>
+              </div>
+
+              <div class="card" style="margin-top:16px;">
+                <div class="card-body">
+                  <h4 style="margin-bottom:12px;">Detalles</h4>
+                  <div class="info-row"><span class="label">Subido por</span><span class="value">${pc.uploadedByName || '-'}</span></div>
+                  <div class="info-row"><span class="label">Tamano</span><span class="value">${formatFileSize(pc.fileSize)}</span></div>
+                  <div class="info-row"><span class="label">Tipo</span><span class="value">${pc.fileType || 'PDF'}</span></div>
+                  <div class="info-row"><span class="label">Actualizado</span><span class="value">${formatDate(pc.updatedAt || pc.createdAt)}</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        openModal('detailModal');
+        loadPDFViewer(pc.fileURL);
+        loadComments(id);
+
+      } catch(e) {
+        console.error(e);
+        Toast.show('Error cargando print card', 'error');
+      }
+    }
+
+    async function loadPDFViewer(url) {
+      const container = document.getElementById('pdfViewer');
+      if (!url || !container) return;
+
+      try {
+        const pdf = await pdfjsLib.getDocument(url).promise;
+        const page = await pdf.getPage(1);
+        const scale = 1.5;
+        const viewport = page.getViewport({ scale });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+        container.innerHTML = '';
+        container.appendChild(canvas);
+      } catch(e) {
+        container.innerHTML = `<p style="color:var(--gray-400);">No se pudo cargar el PDF</p>`;
+      }
+    }
+
+    function switchDetailTab(tabId, tabEl) {
+      document.querySelectorAll('#detailBody .tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('#detailBody .tab-content').forEach(c => c.classList.remove('active'));
+      tabEl.classList.add('active');
+      document.getElementById(`tab-${tabId}`).classList.add('active');
+    }
+
+    // ============================================
+    // UPLOAD PRINT CARD
+    // ============================================
+
+    function handleFileSelect(files) {
+      selectedFiles = Array.from(files);
+      const preview = document.getElementById('filePreviewList');
+      preview.innerHTML = selectedFiles.map((f, i) => `
+        <div style="display:flex; align-items:center; gap:12px; padding:8px 12px; background:var(--gray-50); border-radius:var(--radius-md); margin-bottom:8px;">
+          <span style="color:var(--danger);">${Icons.printCard}</span>
+          <div style="flex:1;">
+            <div style="font-size:0.875rem; font-weight:500;">${f.name}</div>
+            <div style="font-size:0.75rem; color:var(--gray-400);">${formatFileSize(f.size)}</div>
+          </div>
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="removeFile(${i})">${Icons.x}</button>
+        </div>
+      `).join('');
+
+      // Auto-fill name from filename
+      if (selectedFiles.length === 1 && !document.getElementById('pcName').value) {
+        const name = selectedFiles[0].name.replace(/\.[^/.]+$/, '').replace(/_/g, ' ');
+        document.getElementById('pcName').value = name;
+      }
+    }
+
+    function removeFile(index) {
+      selectedFiles.splice(index, 1);
+      const dt = new DataTransfer();
+      selectedFiles.forEach(f => dt.items.add(f));
+      document.getElementById('fileInput').files = dt.files;
+      handleFileSelect(dt.files);
+    }
+
+    // Drag & Drop
+    document.addEventListener('DOMContentLoaded', () => {
+      const zone = document.getElementById('uploadZone');
+      if (!zone) return;
+
+      ['dragenter', 'dragover'].forEach(e => {
+        zone.addEventListener(e, (ev) => { ev.preventDefault(); zone.classList.add('dragover'); });
+      });
+      ['dragleave', 'drop'].forEach(e => {
+        zone.addEventListener(e, (ev) => { ev.preventDefault(); zone.classList.remove('dragover'); });
+      });
+      zone.addEventListener('drop', (e) => {
+        const files = e.dataTransfer.files;
+        document.getElementById('fileInput').files = files;
+        handleFileSelect(files);
+      });
+    });
+
+    async function uploadPrintCard() {
+      const name = document.getElementById('pcName').value.trim();
+      const clientId = document.getElementById('pcClient').value;
+      const code = document.getElementById('pcCode').value.trim();
+      const notes = document.getElementById('pcNotes').value.trim();
+
+      if (!selectedFiles.length) { Toast.show('Selecciona un archivo', 'warning'); return; }
+      if (!name) { Toast.show('Ingresa un nombre', 'warning'); return; }
+      if (!clientId) { Toast.show('Selecciona un cliente', 'warning'); return; }
+
+      const btn = document.getElementById('uploadBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;"></div> Subiendo...';
+
+      try {
+        const file = selectedFiles[0];
+        const pcId = db.collection(COLLECTIONS.PRINT_CARDS).doc().id;
+
+        // Upload file to Storage
+        const fileRef = storage.ref(`${STORAGE_PATHS.PRINT_CARDS}/${pcId}/${file.name}`);
+        await fileRef.put(file);
+        const fileURL = await fileRef.getDownloadURL();
+
+        // Get client name
+        const clientDoc = await db.collection(COLLECTIONS.CLIENTS).doc(clientId).get();
+        const clientName = clientDoc.exists ? clientDoc.data().name : '';
+
+        // Create print card record
+        await db.collection(COLLECTIONS.PRINT_CARDS).doc(pcId).set({
+          name,
+          code,
+          notes,
+          clientId,
+          clientName,
+          fileName: file.name,
+          fileURL,
+          fileSize: file.size,
+          fileType: file.type,
+          status: 'draft',
+          statusHistory: {
+            draft: firebase.firestore.FieldValue.serverTimestamp()
+          },
+          uploadedBy: Auth.currentUser.uid,
+          uploadedByName: Auth.userProfile.name,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Audit log
+        AuditLog.log({
+          action: 'printcard_created',
+          userId: Auth.currentUser.uid,
+          printCardId: pcId,
+          details: { name, code, clientName }
+        });
+
+        Toast.show('Print card subido exitosamente', 'success');
+        closeModal('uploadModal');
+        resetUploadForm();
+        navigateTo('printcards');
+
+      } catch(e) {
+        console.error('Upload error:', e);
+        Toast.show('Error al subir el archivo', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `${Icons.upload} Subir Print Card`;
+      }
+    }
+
+    function resetUploadForm() {
+      document.getElementById('pcName').value = '';
+      document.getElementById('pcCode').value = '';
+      document.getElementById('pcNotes').value = '';
+      document.getElementById('pcClient').value = '';
+      document.getElementById('filePreviewList').innerHTML = '';
+      selectedFiles = [];
+    }
+
+    // ============================================
+    // SEND TO CLIENT
+    // ============================================
+
+    async function sendToClient(id) {
+      try {
+        await db.collection(COLLECTIONS.PRINT_CARDS).doc(id).update({
+          status: 'sent',
+          'statusHistory.sent': firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        const pcDoc = await db.collection(COLLECTIONS.PRINT_CARDS).doc(id).get();
+        const pc = pcDoc.data();
+
+        // Create notification for client
+        await db.collection(COLLECTIONS.NOTIFICATIONS).add({
+          userId: pc.clientId,
+          type: 'printcard_sent',
+          title: 'Nuevo Print Card para revisar',
+          message: `"${pc.name}" esta listo para tu revision y aprobacion`,
+          printCardId: id,
+          read: false,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        AuditLog.log({
+          action: 'printcard_sent',
+          userId: Auth.currentUser.uid,
+          printCardId: id,
+          details: { clientId: pc.clientId, clientName: pc.clientName }
+        });
+
+        Toast.show('Print card enviado al cliente', 'success');
+        if (currentPage === 'dashboard') navigateTo('dashboard');
+        else if (currentPage === 'printcards') navigateTo('printcards');
+
+      } catch(e) {
+        console.error(e);
+        Toast.show('Error al enviar', 'error');
+      }
+    }
+
+    // ============================================
+    // SIGNATURE FLOW
+    // ============================================
+
+    function openSignModal(id) {
+      currentPrintCardId = id;
+
+      // Pre-fill with user info
+      document.getElementById('signName').value = Auth.userProfile.name || '';
+      document.getElementById('signTitle').value = '';
+      document.getElementById('signComments').value = '';
+
+      openModal('signModal');
+
+      // Init signature pad after modal is visible
+      setTimeout(() => {
+        const canvas = document.getElementById('signatureCanvas');
+        SignaturePad.init(canvas);
+      }, 300);
+    }
+
+    function clearSignature() {
+      SignaturePad.clear();
+    }
+
+    async function submitSignature(action) {
+      const name = document.getElementById('signName').value.trim();
+      const title = document.getElementById('signTitle').value.trim();
+      const comments = document.getElementById('signComments').value.trim();
+
+      if (!name) { Toast.show('Ingresa tu nombre', 'warning'); return; }
+      if (SignaturePad.isBlank()) { Toast.show('Por favor firma en el area de firma', 'warning'); return; }
+
+      const btn = action === 'approved' ? document.getElementById('approveBtn') : document.getElementById('rejectBtn');
+      btn.disabled = true;
+
+      const signatureData = SignaturePad.toDataURL();
+
+      const result = await SignatureService.signPrintCard(currentPrintCardId, signatureData, {
+        name,
+        email: Auth.userProfile.email,
+        title,
+        company: Auth.userProfile.company,
+        action,
+        comments
+      });
+
+      if (result.success) {
+        Toast.show(
+          action === 'approved' ? 'Print card aprobado exitosamente' : 'Print card rechazado',
+          action === 'approved' ? 'success' : 'warning'
+        );
+        closeModal('signModal');
+        if (currentPage === 'dashboard') navigateTo('dashboard');
+        else navigateTo('printcards');
+      } else {
+        Toast.show(result.error, 'error');
+      }
+
+      btn.disabled = false;
+    }
+
+    // ============================================
+    // CLIENTS
+    // ============================================
+
+    async function renderClients(container) {
+      container.innerHTML = `
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-xl);">
+          <h1>Clientes</h1>
+          <button class="btn btn-primary" onclick="openModal('clientModal')">${Icons.plus} Nuevo Cliente</button>
+        </div>
+        <div class="folder-grid" id="clientGrid">
+          <div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--gray-400);">Cargando...</div>
+        </div>
+      `;
+
+      try {
+        const snapshot = await db.collection(COLLECTIONS.CLIENTS).orderBy('name').get();
+        clients = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        const grid = document.getElementById('clientGrid');
+        if (clients.length === 0) {
+          grid.innerHTML = `
+            <div class="empty-state" style="grid-column:1/-1;">
+              <div class="empty-icon">${Icons.folder}</div>
+              <h3>No hay clientes</h3>
+              <p>Crea tu primer cliente para comenzar a enviar print cards</p>
+              <button class="btn btn-primary" onclick="openModal('clientModal')">${Icons.plus} Nuevo Cliente</button>
+            </div>
+          `;
+          return;
+        }
+
+        grid.innerHTML = clients.map(c => `
+          <div class="folder-item" onclick="viewClientFolder('${c.id}')">
+            <div class="folder-icon">${Icons.folder}</div>
+            <div class="folder-name">${c.name}</div>
+            <div class="folder-count">${c.printCardCount || 0} print cards</div>
+            <div style="font-size:0.75rem; color:var(--gray-400); margin-top:4px;">${c.email || ''}</div>
+          </div>
+        `).join('');
+
+      } catch(e) {
+        console.error(e);
+      }
+    }
+
+    async function createClient() {
+      const company = document.getElementById('clientCompany').value.trim();
+      const contact = document.getElementById('clientContact').value.trim();
+      const email = document.getElementById('clientEmail').value.trim();
+      const phone = document.getElementById('clientPhone').value.trim();
+
+      if (!company) { Toast.show('Ingresa el nombre de la empresa', 'warning'); return; }
+
+      try {
+        const clientId = db.collection(COLLECTIONS.CLIENTS).doc().id;
+        await db.collection(COLLECTIONS.CLIENTS).doc(clientId).set({
+          name: company,
+          contactName: contact,
+          email,
+          phone,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          isActive: true,
+          printCardCount: 0,
+          createdBy: Auth.currentUser.uid
+        });
+
+        Toast.show('Cliente creado exitosamente', 'success');
+        closeModal('clientModal');
+
+        // Clear form
+        ['clientCompany', 'clientContact', 'clientEmail', 'clientPhone'].forEach(id => {
+          document.getElementById(id).value = '';
+        });
+
+        if (currentPage === 'clients') navigateTo('clients');
+
+      } catch(e) {
+        Toast.show('Error al crear cliente', 'error');
+      }
+    }
+
+    function viewClientFolder(clientId) {
+      navigateTo('printcards');
+      setTimeout(() => {
+        const filter = document.getElementById('pcClientFilter');
+        if (filter) {
+          filter.value = clientId;
+          filterPrintCards();
+        }
+      }, 500);
+    }
+
+    async function loadClientFilter() {
+      try {
+        const snapshot = await db.collection(COLLECTIONS.CLIENTS).orderBy('name').get();
+        const select = document.getElementById('pcClientFilter');
+        if (!select) return;
+
+        snapshot.forEach(doc => {
+          const c = doc.data();
+          const option = document.createElement('option');
+          option.value = doc.id;
+          option.textContent = c.name;
+          select.appendChild(option);
+        });
+      } catch(e) {}
+    }
+
+    async function loadClientDropdown() {
+      try {
+        const snapshot = await db.collection(COLLECTIONS.CLIENTS).orderBy('name').get();
+        const select = document.getElementById('pcClient');
+        if (!select) return;
+
+        select.innerHTML = '<option value="">Selecciona un cliente...</option>';
+        snapshot.forEach(doc => {
+          const c = doc.data();
+          const option = document.createElement('option');
+          option.value = doc.id;
+          option.textContent = c.name;
+          select.appendChild(option);
+        });
+      } catch(e) {}
+    }
+
+    // ============================================
+    // USERS MANAGEMENT
+    // ============================================
+
+    async function renderUsers(container) {
+      container.innerHTML = `
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-xl);">
+          <h1>Usuarios</h1>
+        </div>
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Usuario</th>
+                  <th>Email</th>
+                  <th>Rol</th>
+                  <th>Empresa</th>
+                  <th>Registrado</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody">
+                <tr><td colspan="6" style="text-align:center; padding:32px; color:var(--gray-400);">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      try {
+        const snapshot = await db.collection(COLLECTIONS.USERS).orderBy('createdAt', 'desc').get();
+        const tbody = document.getElementById('usersTableBody');
+        tbody.innerHTML = '';
+
+        snapshot.forEach(doc => {
+          const u = doc.data();
+          const roleLabels = { admin: 'Administrador', designer: 'Disenador', client: 'Cliente' };
+          tbody.innerHTML += `
+            <tr>
+              <td>
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <div class="user-avatar">${getInitials(u.name)}</div>
+                  <span style="font-weight:600;">${u.name}</span>
+                </div>
+              </td>
+              <td style="font-size:0.875rem;">${u.email}</td>
+              <td><span class="status-badge ${u.role === 'admin' ? 'sent' : u.role === 'designer' ? 'draft' : 'pending'}">${roleLabels[u.role] || u.role}</span></td>
+              <td style="font-size:0.875rem;">${u.company || '-'}</td>
+              <td style="font-size:0.8125rem; color:var(--gray-500);">${formatDate(u.createdAt)}</td>
+              <td><span class="status-badge ${u.isActive ? 'approved' : 'rejected'}">${u.isActive ? 'Activo' : 'Inactivo'}</span></td>
+            </tr>
+          `;
+        });
+      } catch(e) {
+        console.error(e);
+      }
+    }
+
+    // ============================================
+    // SETTINGS
+    // ============================================
+
+    function renderSettings(container) {
+      const p = Auth.userProfile;
+      container.innerHTML = `
+        <h1 style="margin-bottom:var(--space-xl);">Configuracion</h1>
+
+        <div class="card" style="max-width:600px;">
+          <div class="card-header"><h3>Perfil</h3></div>
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label">Nombre</label>
+              <input type="text" class="form-input" id="settingsName" value="${p.name || ''}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Empresa</label>
+              <input type="text" class="form-input" id="settingsCompany" value="${p.company || ''}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Telefono</label>
+              <input type="text" class="form-input" id="settingsPhone" value="${p.phone || ''}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-input" value="${p.email}" disabled style="background:var(--gray-50);">
+            </div>
+          </div>
+          <div class="card-footer">
+            <button class="btn btn-primary" onclick="saveSettings()">Guardar Cambios</button>
+          </div>
+        </div>
+      `;
+    }
+
+    async function saveSettings() {
+      const name = document.getElementById('settingsName').value.trim();
+      const company = document.getElementById('settingsCompany').value.trim();
+      const phone = document.getElementById('settingsPhone').value.trim();
+
+      const result = await Auth.updateProfile({ name, company, phone });
+      if (result.success) {
+        Toast.show('Perfil actualizado', 'success');
+        updateSidebarInfo();
+      } else {
+        Toast.show('Error al guardar', 'error');
+      }
+    }
+
+    // ============================================
+    // COMMENTS
+    // ============================================
+
+    async function loadComments(printCardId) {
+      const container = document.getElementById('commentsContainer');
+      if (!container) return;
+
+      try {
+        const snapshot = await db.collection(COLLECTIONS.COMMENTS)
+          .where('printCardId', '==', printCardId)
+          .orderBy('createdAt', 'asc')
+          .get();
+
+        if (snapshot.empty) {
+          container.innerHTML = '<p style="color:var(--gray-400); font-size:0.875rem;">No hay comentarios aun</p>';
+          return;
+        }
+
+        container.innerHTML = snapshot.docs.map(doc => {
+          const c = doc.data();
+          return `
+            <div class="comment">
+              <div class="user-avatar" style="width:32px; height:32px; font-size:0.75rem;">${getInitials(c.authorName)}</div>
+              <div class="comment-content">
+                <div class="comment-header">
+                  <span class="comment-author">${c.authorName}</span>
+                  <span class="comment-time">${formatRelativeTime(c.createdAt)}</span>
+                </div>
+                <div class="comment-text">${c.text}</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch(e) {
+        container.innerHTML = '<p style="color:var(--gray-400);">Error cargando comentarios</p>';
+      }
+    }
+
+    async function addComment(printCardId) {
+      const input = document.getElementById('commentInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      try {
+        await db.collection(COLLECTIONS.COMMENTS).add({
+          printCardId,
+          text,
+          authorId: Auth.currentUser.uid,
+          authorName: Auth.userProfile.name,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        input.value = '';
+        loadComments(printCardId);
+        Toast.show('Comentario agregado', 'success');
+      } catch(e) {
+        Toast.show('Error al comentar', 'error');
+      }
+    }
+
+    // ============================================
+    // NOTIFICATIONS
+    // ============================================
+
+    function toggleNotifications() {
+      const panel = document.getElementById('notifPanel');
+      const overlay = document.getElementById('notifOverlay');
+      const isOpen = panel.classList.contains('open');
+
+      panel.classList.toggle('open');
+      overlay.style.display = isOpen ? 'none' : 'block';
+    }
+
+    function setupNotificationListener() {
+      if (unsubscribeNotifications) unsubscribeNotifications();
+
+      unsubscribeNotifications = db.collection(COLLECTIONS.NOTIFICATIONS)
+        .where('userId', '==', Auth.currentUser.uid)
+        .orderBy('createdAt', 'desc')
+        .limit(20)
+        .onSnapshot(snapshot => {
+          const list = document.getElementById('notifList');
+          const dot = document.getElementById('notifDot');
+          let unreadCount = 0;
+
+          if (snapshot.empty) {
+            list.innerHTML = '<li style="padding:32px; text-align:center; color:var(--gray-400);">Sin notificaciones</li>';
+            dot.style.display = 'none';
+            return;
+          }
+
+          list.innerHTML = '';
+          snapshot.forEach(doc => {
+            const n = doc.data();
+            if (!n.read) unreadCount++;
+
+            list.innerHTML += `
+              <li class="notification-item ${!n.read ? 'unread' : ''}" onclick="handleNotifClick('${doc.id}', '${n.printCardId || ''}')">
+                <div class="notif-title">${n.title}</div>
+                <div class="notif-text">${n.message}</div>
+                <div class="notif-time">${formatRelativeTime(n.createdAt)}</div>
+              </li>
+            `;
+          });
+
+          dot.style.display = unreadCount > 0 ? 'block' : 'none';
+
+          // Update badge
+          const badge = document.getElementById('pendingBadge');
+          if (badge && unreadCount > 0) {
+            badge.textContent = unreadCount;
+            badge.style.display = 'inline';
+          } else if (badge) {
+            badge.style.display = 'none';
+          }
+        });
+    }
+
+    async function handleNotifClick(notifId, printCardId) {
+      // Mark as read
+      await db.collection(COLLECTIONS.NOTIFICATIONS).doc(notifId).update({ read: true });
+
+      toggleNotifications();
+
+      if (printCardId) {
+        viewPrintCard(printCardId);
+      }
+    }
+
+    async function markAllRead() {
+      try {
+        const snapshot = await db.collection(COLLECTIONS.NOTIFICATIONS)
+          .where('userId', '==', Auth.currentUser.uid)
+          .where('read', '==', false)
+          .get();
+
+        const batch = db.batch();
+        snapshot.forEach(doc => batch.update(doc.ref, { read: true }));
+        await batch.commit();
+
+        Toast.show('Todas las notificaciones marcadas como leidas', 'success');
+      } catch(e) {}
+    }
+
+    // ============================================
+    // HELPERS
+    // ============================================
+
+    function statusLabel(status) {
+      const labels = {
+        draft: 'Borrador',
+        sent: 'Enviado',
+        pending: 'Pendiente',
+        approved: 'Aprobado',
+        rejected: 'Rechazado'
+      };
+      return labels[status] || status;
+    }
+
+    function auditActionLabel(action) {
+      const labels = {
+        printcard_created: 'Print card creado',
+        printcard_sent: 'Enviado al cliente',
+        printcard_viewed: 'Visualizado',
+        printcard_approved: 'Aprobado y firmado',
+        printcard_rejected: 'Rechazado',
+        user_login: 'Inicio de sesion',
+        user_logout: 'Cierre de sesion'
+      };
+      return labels[action] || action;
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.add('active');
+      if (id === 'uploadModal') loadClientDropdown();
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+    }
+
+    function updateSidebarInfo() {
+      const p = Auth.userProfile;
+      document.getElementById('sidebarAvatar').textContent = getInitials(p.name);
+      document.getElementById('sidebarName').textContent = p.name;
+      const roleLabels = { admin: 'Administrador', designer: 'Disenador', client: 'Cliente' };
+      document.getElementById('sidebarRole').textContent = roleLabels[p.role] || p.role;
+    }
+
+    function handleLogout() {
+      if (unsubscribeNotifications) unsubscribeNotifications();
+      Auth.logout();
+    }
+
+    async function downloadPrintCard(id) {
+      try {
+        const doc = await db.collection(COLLECTIONS.PRINT_CARDS).doc(id).get();
+        if (doc.exists && doc.data().fileURL) {
+          window.open(doc.data().fileURL, '_blank');
+        }
+      } catch(e) {
+        Toast.show('Error al descargar', 'error');
+      }
+    }
+
+    async function deletePrintCard(id) {
+      if (!confirm('Estas seguro de eliminar este print card? Esta accion no se puede deshacer.')) return;
+      try {
+        await db.collection(COLLECTIONS.PRINT_CARDS).doc(id).delete();
+        Toast.show('Print card eliminado', 'success');
+        closeModal('detailModal');
+        navigateTo('printcards');
+      } catch(e) {
+        Toast.show('Error al eliminar', 'error');
+      }
+    }
+
+    function handleGlobalSearch(value) {
+      if (currentPage !== 'printcards') navigateTo('printcards');
+      setTimeout(() => {
+        const pcSearch = document.getElementById('pcSearch');
+        if (pcSearch) {
+          pcSearch.value = value;
+          filterPrintCards();
+        }
+      }, 300);
+    }
+
+    // ============================================
+    // INITIALIZATION
+    // ============================================
+
+    Auth.onAuthenticated = function() {
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('appLayout').style.display = 'flex';
+
+      updateSidebarInfo();
+
+      // Show/hide admin sections based on role
+      const role = Auth.userProfile.role;
+      const isClient = role === 'client';
+
+      if (isClient) {
+        document.getElementById('adminSection').style.display = 'none';
+        document.getElementById('clientsNav').style.display = 'none';
+        document.getElementById('uploadNav').style.display = 'none';
+        document.getElementById('usersNav').style.display = 'none';
+      }
+
+      setupNotificationListener();
+      navigateTo('dashboard');
+    };
+
+    Auth.onUnauthenticated = function() {
+      window.location.href = 'index.html';
+    };
+
+    // Close modals on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.classList.remove('active');
+        }
+      });
+    });
+
+    Toast.init();
+    Auth.init();
+  </script>
+</body>
+</html>
