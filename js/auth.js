@@ -1,13 +1,12 @@
 // ============================================
 // AUTHENTICATION MODULE
-// Handles login, register, password reset, and role management
+// Handles login, register with invite codes, password reset
 // ============================================
 
 const Auth = {
   currentUser: null,
   userProfile: null,
 
-  // Initialize auth state listener
   init() {
     auth.onAuthStateChanged(async (user) => {
       if (user) {
@@ -18,7 +17,6 @@ const Auth = {
             Auth.userProfile = { id: user.uid, ...profile.data() };
             Auth.onAuthenticated();
           } else {
-            // First time - shouldn't happen if registered properly
             auth.signOut();
           }
         } catch (err) {
@@ -33,18 +31,10 @@ const Auth = {
     });
   },
 
-  // Login with email/password
   async login(email, password) {
     try {
       const result = await auth.signInWithEmailAndPassword(email, password);
-
-      // Log audit
-      AuditLog.log({
-        action: 'user_login',
-        userId: result.user.uid,
-        details: { email }
-      });
-
+      AuditLog.log({ action: 'user_login', userId: result.user.uid, details: { email } });
       return { success: true };
     } catch (err) {
       let message = 'Error al iniciar sesion';
@@ -58,22 +48,53 @@ const Auth = {
     }
   },
 
-  // Register new user
+  async validateInviteCode(code) {
+    try {
+      const snapshot = await db.collection('inviteCodes')
+        .where('code', '==', code)
+        .where('used', '==', false)
+        .limit(1)
+        .get();
+
+      if (snapshot.empty) {
+        return { valid: false, error: 'Codigo de invitacion invalido o ya utilizado' };
+      }
+
+      const doc = snapshot.docs[0];
+      const data = doc.data();
+      return {
+        valid: true,
+        codeId: doc.id,
+        role: data.role || 'client',
+        clientName: data.clientName || '',
+        assignedCompany: data.company || ''
+      };
+    } catch (err) {
+      console.error('Error validating invite code:', err);
+      return { valid: false, error: 'Error al validar el codigo' };
+    }
+  },
+
   async register(data) {
     try {
-      const { email, password, name, company, role } = data;
+      const { email, password, name, company, inviteCode } = data;
 
+      // Validate invite code first
+      const codeResult = await Auth.validateInviteCode(inviteCode);
+      if (!codeResult.valid) {
+        return { success: false, error: codeResult.error };
+      }
+
+      const role = codeResult.role;
       const result = await auth.createUserWithEmailAndPassword(email, password);
-
-      // Update display name
       await result.user.updateProfile({ displayName: name });
 
-      // Create user profile in Firestore
       await db.collection(COLLECTIONS.USERS).doc(result.user.uid).set({
         name,
         email,
-        company: company || '',
-        role: role || 'client', // admin, designer, client
+        company: company || codeResult.assignedCompany || '',
+        role: role,
+        inviteCode: inviteCode,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         isActive: true,
         avatar: null,
@@ -81,10 +102,9 @@ const Auth = {
         lastLogin: firebase.firestore.FieldValue.serverTimestamp()
       });
 
-      // If registering a client, also create client record
       if (role === 'client') {
         await db.collection(COLLECTIONS.CLIENTS).doc(result.user.uid).set({
-          name: company || name,
+          name: company || codeResult.clientName || name,
           contactName: name,
           email,
           userId: result.user.uid,
@@ -94,10 +114,18 @@ const Auth = {
         });
       }
 
+      // Mark invite code as used
+      await db.collection('inviteCodes').doc(codeResult.codeId).update({
+        used: true,
+        usedBy: result.user.uid,
+        usedByEmail: email,
+        usedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
       AuditLog.log({
         action: 'user_registered',
         userId: result.user.uid,
-        details: { email, role }
+        details: { email, role, inviteCode }
       });
 
       return { success: true };
@@ -112,7 +140,6 @@ const Auth = {
     }
   },
 
-  // Send password reset email
   async resetPassword(email) {
     try {
       await auth.sendPasswordResetEmail(email);
@@ -122,15 +149,10 @@ const Auth = {
     }
   },
 
-  // Logout
   async logout() {
     try {
       if (Auth.currentUser) {
-        AuditLog.log({
-          action: 'user_logout',
-          userId: Auth.currentUser.uid,
-          details: {}
-        });
+        AuditLog.log({ action: 'user_logout', userId: Auth.currentUser.uid, details: {} });
       }
       await auth.signOut();
     } catch (err) {
@@ -138,7 +160,6 @@ const Auth = {
     }
   },
 
-  // Update user profile
   async updateProfile(data) {
     if (!Auth.currentUser) return { success: false };
     try {
@@ -153,31 +174,6 @@ const Auth = {
     }
   },
 
-  // Create user by admin (invite client/designer)
-  async createUser(data) {
-    // This would typically use Firebase Admin SDK via Cloud Functions
-    // For now, we create a pending invitation
-    try {
-      const inviteId = db.collection('invitations').doc().id;
-      await db.collection('invitations').doc(inviteId).set({
-        email: data.email,
-        name: data.name,
-        company: data.company || '',
-        role: data.role,
-        invitedBy: Auth.currentUser.uid,
-        invitedByName: Auth.userProfile.name,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        status: 'pending',
-        token: inviteId
-      });
-
-      return { success: true, inviteId };
-    } catch (err) {
-      return { success: false, error: 'Error creating invitation' };
-    }
-  },
-
-  // Callbacks - overridden by app
   onAuthenticated() {},
   onUnauthenticated() {}
 };
