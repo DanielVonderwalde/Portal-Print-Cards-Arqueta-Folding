@@ -3,7 +3,7 @@
 // Note: Firebase compat libraries are loaded via <script> tags in HTML
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAdoeWK1rXP0VQ8MMNY2FI4HPeWcWvxWc",
+  apiKey: "AIzaSyAdoeWK1rXP0VQ8MMNY2FI4HPeWcWWvxWc",
   authDomain: "portal-print-cards.firebaseapp.com",
   projectId: "portal-print-cards",
   storageBucket: "portal-print-cards.firebasestorage.app",
