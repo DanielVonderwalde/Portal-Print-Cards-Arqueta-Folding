@@ -2,99 +2,17 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    function isAdmin() {
-      return isAuthenticated() &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-
-    function isDesigner() {
-      return isAuthenticated() &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'designer'];
-    }
-
-    function isOwnerOrAdmin(userId) {
-      return isAuthenticated() && (request.auth.uid == userId || isAdmin());
-    }
-
-    // Users collection
-    match /users/{userId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.auth.uid == userId;
-      allow update: if isOwnerOrAdmin(userId);
-      allow delete: if isAdmin();
-    }
-
-    // Clients collection
-    match /clients/{clientId} {
-      allow read: if isAuthenticated();
-      allow create: if isDesigner();
-      allow update: if isDesigner();
-      allow delete: if isAdmin();
-    }
-
-    // Print Cards collection
-    match /printCards/{printCardId} {
-      allow read: if isAuthenticated() && (
-        isDesigner() ||
-        resource.data.clientId == request.auth.uid
-      );
-      allow create: if isDesigner();
-      allow update: if isAuthenticated();
-      allow delete: if isDesigner();
-    }
-
-    // Signatures collection
-    match /signatures/{signatureId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update: if false;
-      allow delete: if false;
-    }
-
-    // Audit Log collection
-    match /auditLog/{logId} {
-      allow read: if isDesigner();
-      allow create: if isAuthenticated();
-      allow update: if false;
-      allow delete: if false;
-    }
-
-    // Notifications collection
-    match /notifications/{notifId} {
-      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
-    }
-
-    // Comments collection
-    match /comments/{commentId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && resource.data.authorId == request.auth.uid;
-      allow delete: if isAdmin();
-    }
-
-    // Invitations collection
-    match /invitations/{inviteId} {
-      allow read: if isAuthenticated();
-      allow create: if isDesigner();
-      allow update: if isAuthenticated();
-      allow delete: if isAdmin();
-    }
-
-    // Invite Codes collection
-    match /inviteCodes/{codeId} {
-      allow read: if true;
-      allow create: if isDesigner();
-      allow update: if true;
-      allow delete: if isAdmin();
+    // ============================================================
+    // DEMO MODE (currently active in the app, DEMO_MODE = true).
+    // Open to ANY signed-in user, including anonymous. The app is
+    // publicly accessible with no login in this mode.
+    //
+    // Before going to production: set DEMO_MODE = false in app.html
+    // and restore the role-based rules (preserved in git history at
+    // commit a8340bf and earlier — the isAdmin()/isDesigner() set).
+    // ============================================================
+    match /{document=**} {
+      allow read, write: if request.auth != null;
     }
   }
 }
-
