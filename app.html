@@ -989,6 +989,19 @@
 
       try {
         const file = selectedFiles[0];
+
+        // Firestore has a hard 1 MB per-document limit. The file is stored as a
+        // base64 data URL (~1.37x its raw size), so anything over ~700 KB will not
+        // fit and the write would hang forever. Fail fast with a clear message.
+        const MAX_FILE_BYTES = 700 * 1024; // ~700 KB raw
+        if (file.size > MAX_FILE_BYTES) {
+          const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+          Toast.show(`El archivo pesa ${sizeMB} MB. El maximo actual es ~700 KB. Comprime el PDF o contacta soporte.`, 'error');
+          btn.disabled = false;
+          btn.innerHTML = `${Icons.upload} Subir Print Card`;
+          return;
+        }
+
         const pcId = db.collection(COLLECTIONS.PRINT_CARDS).doc().id;
 
         // Read file as base64 data URL (no Firebase Storage needed)
@@ -1043,7 +1056,7 @@
 
       } catch(e) {
         console.error('Upload error:', e);
-        Toast.show('Error al subir el archivo', 'error');
+        Toast.show('Error al subir el archivo: ' + (e && e.message ? e.message : e), 'error');
       } finally {
         btn.disabled = false;
         btn.innerHTML = `${Icons.upload} Subir Print Card`;
