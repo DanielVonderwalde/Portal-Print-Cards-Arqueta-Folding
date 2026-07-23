@@ -25,14 +25,25 @@ const COLLECTIONS = {
   CLIENTS: 'clients',
   SIGNATURES: 'signatures',
   NOTIFICATIONS: 'notifications',
-  AUDIT_LOG: 'auditLog'
+  AUDIT_LOG: 'auditLog',
+  SUBMISSIONS: 'submissions',
+  SETTINGS: 'settings'
 };
 
 // Storage paths
 const STORAGE_PATHS = {
   PRINT_CARDS: 'printcards',
-  SIGNATURES: 'signatures'
+  SIGNATURES: 'signatures',
+  SUBMISSIONS: 'submissions'
 };
+
+// Web3Forms access key for sending emails to the admin recipients.
+// Get a free key at https://web3forms.com (register with the admin email),
+// then replace the placeholder below.
+const WEB3FORMS_KEY = 'YOUR_WEB3FORMS_ACCESS_KEY';
+
+// Default email that receives client document submissions (editable in-app).
+const DEFAULT_NOTIFY_EMAIL = 'danielvonderwalde@arquetaf.com';
 
 // Status constants
 const PRINT_CARD_STATUS = {

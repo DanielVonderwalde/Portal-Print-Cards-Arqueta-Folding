@@ -6,7 +6,7 @@
   <title>Arqueta Folding - Print Card Approval</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=6">
+  <link rel="stylesheet" href="css/styles.css?v=7">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>ð</text></svg>">
 </head>
 <body>
@@ -33,8 +33,15 @@
           <span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span> Print Cards
           <span class="badge" id="pendingBadge" style="display:none;">0</span>
         </div>
+        <div class="nav-item" data-page="submit" onclick="navigateTo('submit')" id="submitNav">
+          <span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></span> Enviar Documentos
+        </div>
 
         <div class="nav-section" id="adminSection">Gestion</div>
+        <div class="nav-item" data-page="submissions" onclick="navigateTo('submissions')" id="submissionsNav">
+          <span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></span> Documentos Recibidos
+          <span class="badge" id="submissionsBadge" style="display:none;">0</span>
+        </div>
         <div class="nav-item" data-page="clients" onclick="navigateTo('clients')" id="clientsNav">
           <span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Clientes
         </div>
@@ -315,10 +322,10 @@
   </script>
 
   <!-- App Scripts -->
-  <script src="js/firebase-config.js?v=6"></script>
-  <script src="js/utils.js?v=6"></script>
-  <script src="js/auth.js?v=6"></script>
-  <script src="js/signature.js?v=6"></script>
+  <script src="js/firebase-config.js?v=7"></script>
+  <script src="js/utils.js?v=7"></script>
+  <script src="js/auth.js?v=7"></script>
+  <script src="js/signature.js?v=7"></script>
 
   <script>
     // ============================================
@@ -356,6 +363,8 @@
         clients: 'Clientes',
         upload: 'Subir Print Card',
         users: 'Usuarios',
+        submit: 'Enviar Documentos',
+        submissions: 'Documentos Recibidos',
         settings: 'Configuracion'
       };
       document.getElementById('breadcrumb').innerHTML = `
@@ -375,6 +384,8 @@
         case 'clients': renderClients(container); break;
         case 'upload': openModal('uploadModal'); navigateTo('printcards'); break;
         case 'users': renderUsers(container); break;
+        case 'submit': renderSubmit(container); break;
+        case 'submissions': renderSubmissions(container); break;
         case 'settings': renderSettings(container); break;
         default: renderDashboard(container);
       }
@@ -1510,7 +1521,23 @@
             <button class="btn btn-primary" onclick="saveSettings()">Guardar Cambios</button>
           </div>
         </div>
+
+        ${p.role !== 'client' ? `
+        <div class="card" style="max-width:600px; margin-top:24px;">
+          <div class="card-header"><h3>Correos que reciben los documentos</h3></div>
+          <div class="card-body">
+            <p style="font-size:0.875rem; color:var(--gray-500); margin-bottom:16px;">Estas personas reciben por correo los artes y documentos que envian los clientes. Agrega o quita a quien necesites.</p>
+            <div id="recipientList" style="margin-bottom:16px;"><p style="color:var(--gray-400); font-size:0.875rem;">Cargando...</p></div>
+            <div style="display:flex; gap:8px;">
+              <input type="email" class="form-input" id="newRecipient" placeholder="correo@ejemplo.com" onkeydown="if(event.key==='Enter'){event.preventDefault();addRecipient();}">
+              <button class="btn btn-primary" onclick="addRecipient()">Agregar</button>
+            </div>
+          </div>
+        </div>
+        ` : ''}
       `;
+
+      if (p.role !== 'client') loadRecipientsUI();
     }
 
     async function saveSettings() {
@@ -1525,6 +1552,255 @@
       } else {
         Toast.show('Error al guardar', 'error');
       }
+    }
+
+    // ============================================
+    // CLIENT DOCUMENT SUBMISSIONS (upload -> email admin)
+    // ============================================
+
+    let submissionFiles = [];
+
+    function renderSubmit(container) {
+      submissionFiles = [];
+      container.innerHTML = `
+        <div style="max-width:680px;">
+          <h1 style="margin-bottom:8px;">Enviar Arte / Documentos</h1>
+          <p style="color:var(--gray-500); margin-bottom:var(--space-xl);">Sube tus archivos (artes, PDFs, imagenes) y se enviaran al equipo de Arqueta Folding.</p>
+          <div class="card">
+            <div class="card-body">
+              <div class="form-group">
+                <label class="form-label">Asunto</label>
+                <input type="text" class="form-input" id="subSubject" placeholder="Ej: Arte final display Solely">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Mensaje</label>
+                <textarea class="form-textarea" id="subMessage" rows="4" placeholder="Describe lo que envias..."></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Archivos</label>
+                <div onclick="document.getElementById('subFileInput').click()" style="border:2px dashed var(--gray-300); border-radius:var(--radius-lg); padding:28px; text-align:center; cursor:pointer;">
+                  <p style="color:var(--gray-600); font-weight:600;">Haz clic para seleccionar archivos</p>
+                  <p style="font-size:0.75rem; color:var(--gray-400); margin-top:4px;">PDF, imagenes u otros. Maximo 60 MB por archivo.</p>
+                </div>
+                <input type="file" id="subFileInput" multiple style="display:none;" onchange="handleSubmitFiles(this.files)">
+                <div id="subFileList" style="margin-top:12px;"></div>
+              </div>
+            </div>
+            <div class="card-footer">
+              <button class="btn btn-primary" id="subSendBtn" onclick="submitDocuments()">${Icons.send} Enviar al Administrador</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function handleSubmitFiles(files) {
+      submissionFiles = Array.from(files);
+      renderSubmitFileList();
+    }
+
+    function renderSubmitFileList() {
+      const el = document.getElementById('subFileList');
+      if (!el) return;
+      el.innerHTML = submissionFiles.map((f, i) => `
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:var(--gray-50); border-radius:var(--radius-md); margin-bottom:6px;">
+          <span style="font-size:0.875rem;">${f.name} <span style="color:var(--gray-400);">(${formatFileSize(f.size)})</span></span>
+          <button class="btn btn-ghost btn-sm" onclick="removeSubmitFile(${i})">${Icons.trash}</button>
+        </div>
+      `).join('');
+    }
+
+    function removeSubmitFile(i) {
+      submissionFiles.splice(i, 1);
+      renderSubmitFileList();
+    }
+
+    async function submitDocuments() {
+      const subject = document.getElementById('subSubject').value.trim();
+      const message = document.getElementById('subMessage').value.trim();
+      if (!submissionFiles.length) { Toast.show('Selecciona al menos un archivo', 'warning'); return; }
+      if (!subject) { Toast.show('Ingresa un asunto', 'warning'); return; }
+
+      const btn = document.getElementById('subSendBtn');
+      btn.disabled = true;
+
+      try {
+        const subId = db.collection(COLLECTIONS.SUBMISSIONS).doc().id;
+        const uploaded = [];
+        for (let i = 0; i < submissionFiles.length; i++) {
+          const file = submissionFiles[i];
+          if (file.size > 60 * 1024 * 1024) { Toast.show(`"${file.name}" supera 60 MB`, 'error'); btn.disabled = false; btn.innerHTML = `${Icons.send} Enviar al Administrador`; return; }
+          btn.innerHTML = `<div class="spinner" style="width:18px;height:18px;border-width:2px;"></div> Subiendo ${i+1}/${submissionFiles.length}...`;
+          const ref = storage.ref(`${STORAGE_PATHS.SUBMISSIONS}/${subId}/${file.name}`);
+          await ref.put(file);
+          const url = await ref.getDownloadURL();
+          uploaded.push({ name: file.name, url, size: file.size, type: file.type });
+        }
+
+        const senderName = Auth.userProfile.name || 'Cliente';
+        const senderEmail = Auth.userProfile.email || '';
+        const senderCompany = Auth.userProfile.company || '';
+
+        await db.collection(COLLECTIONS.SUBMISSIONS).doc(subId).set({
+          subject, message,
+          senderName, senderEmail, senderCompany,
+          files: uploaded,
+          status: 'nuevo',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          submittedBy: Auth.currentUser.uid
+        });
+
+        try {
+          await db.collection(COLLECTIONS.NOTIFICATIONS).add({
+            userId: 'admin',
+            type: 'submission_received',
+            title: 'Nuevos documentos recibidos',
+            message: `${senderName} envio "${subject}" (${uploaded.length} archivo(s))`,
+            read: false,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        } catch(e) {}
+
+        const emailResult = await sendSubmissionEmail({ subject, message, senderName, senderEmail, senderCompany, files: uploaded });
+
+        AuditLog.log({ action: 'submission_created', userId: Auth.currentUser.uid, details: { subject, count: uploaded.length } });
+
+        if (emailResult.sent) {
+          Toast.show('Documentos enviados por correo al administrador', 'success');
+        } else if (emailResult.skipped) {
+          Toast.show('Documentos guardados. El correo aun no esta configurado.', 'success');
+        } else {
+          Toast.show('Documentos guardados, pero el correo no pudo enviarse.', 'warning');
+        }
+
+        submissionFiles = [];
+        navigateTo('submit');
+      } catch(e) {
+        console.error(e);
+        Toast.show('Error al enviar los documentos', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `${Icons.send} Enviar al Administrador`;
+      }
+    }
+
+    async function sendSubmissionEmail({ subject, message, senderName, senderEmail, senderCompany, files }) {
+      if (!WEB3FORMS_KEY || WEB3FORMS_KEY.indexOf('YOUR_') === 0) return { skipped: true };
+      try {
+        const recipients = await getNotifyRecipients();
+        const fileLines = files.map(f => `- ${f.name} (${formatFileSize(f.size)}): ${f.url}`).join('\n');
+        const body =
+`Nuevos documentos enviados por un cliente.
+
+Cliente: ${senderName}
+Empresa: ${senderCompany || '-'}
+Email: ${senderEmail || '-'}
+Asunto: ${subject}
+
+Mensaje:
+${message || '(sin mensaje)'}
+
+Archivos:
+${fileLines}
+`;
+        const payload = {
+          access_key: WEB3FORMS_KEY,
+          subject: `[Arqueta] ${subject} - ${senderName}`,
+          from_name: 'Portal Arqueta Folding',
+          message: body
+        };
+        if (recipients.length) payload.cc = recipients.join(',');
+        const res = await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        return { sent: !!json.success, raw: json };
+      } catch(e) {
+        console.error('Email error', e);
+        return { sent: false, error: e.message };
+      }
+    }
+
+    async function renderSubmissions(container) {
+      container.innerHTML = `<h1 style="margin-bottom:var(--space-xl);">Documentos Recibidos</h1><div id="submissionsList"><p style="color:var(--gray-400);">Cargando...</p></div>`;
+      try {
+        const snap = await db.collection(COLLECTIONS.SUBMISSIONS).get();
+        const subs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+          .sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+        const list = document.getElementById('submissionsList');
+        if (!subs.length) { list.innerHTML = `<div class="empty-state"><h3>No hay documentos aun</h3><p>Cuando un cliente envie archivos apareceran aqui.</p></div>`; return; }
+        list.innerHTML = subs.map(s => `
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-body">
+              <div style="display:flex; justify-content:space-between; align-items:start; gap:12px;">
+                <div>
+                  <h4 style="margin-bottom:4px;">${s.subject || '(sin asunto)'}</h4>
+                  <div style="font-size:0.8125rem; color:var(--gray-500);">${s.senderName || '-'}${s.senderCompany ? ' &middot; ' + s.senderCompany : ''}${s.senderEmail ? ' &middot; ' + s.senderEmail : ''}</div>
+                </div>
+                <span style="font-size:0.75rem; color:var(--gray-400); white-space:nowrap;">${formatDate(s.createdAt)}</span>
+              </div>
+              ${s.message ? `<p style="margin:12px 0; font-size:0.9375rem; white-space:pre-wrap;">${s.message}</p>` : ''}
+              <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">
+                ${(s.files||[]).map(f => `<a href="${f.url}" target="_blank" class="btn btn-outline btn-sm">${Icons.download} ${f.name}</a>`).join('')}
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } catch(e) {
+        console.error(e);
+        const list = document.getElementById('submissionsList');
+        if (list) list.innerHTML = '<p style="color:var(--danger);">Error cargando documentos</p>';
+      }
+    }
+
+    // ---- Email recipient management ----
+    async function getNotifyRecipients() {
+      try {
+        const doc = await db.collection(COLLECTIONS.SETTINGS).doc('notifications').get();
+        if (doc.exists && Array.isArray(doc.data().recipients) && doc.data().recipients.length) {
+          return doc.data().recipients;
+        }
+      } catch(e) { console.warn(e); }
+      return [DEFAULT_NOTIFY_EMAIL];
+    }
+
+    async function saveNotifyRecipients(list) {
+      await db.collection(COLLECTIONS.SETTINGS).doc('notifications').set({ recipients: list }, { merge: true });
+    }
+
+    async function loadRecipientsUI() {
+      const el = document.getElementById('recipientList');
+      if (!el) return;
+      const list = await getNotifyRecipients();
+      el.innerHTML = list.map(email => `
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:var(--gray-50); border-radius:var(--radius-md); margin-bottom:6px;">
+          <span style="font-size:0.9375rem;">${email}</span>
+          <button class="btn btn-ghost btn-sm" style="color:var(--danger);" onclick="removeRecipient('${email}')">Quitar</button>
+        </div>
+      `).join('') || '<p style="color:var(--gray-400); font-size:0.875rem;">Sin correos configurados.</p>';
+    }
+
+    async function addRecipient() {
+      const input = document.getElementById('newRecipient');
+      const email = input.value.trim().toLowerCase();
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { Toast.show('Ingresa un correo valido', 'warning'); return; }
+      const list = await getNotifyRecipients();
+      if (list.includes(email)) { Toast.show('Ese correo ya esta en la lista', 'warning'); return; }
+      list.push(email);
+      await saveNotifyRecipients(list);
+      input.value = '';
+      Toast.show('Correo agregado', 'success');
+      loadRecipientsUI();
+    }
+
+    async function removeRecipient(email) {
+      let list = await getNotifyRecipients();
+      list = list.filter(e => e !== email);
+      await saveNotifyRecipients(list);
+      Toast.show('Correo quitado', 'success');
+      loadRecipientsUI();
     }
 
     // ============================================
@@ -1901,6 +2177,7 @@
       document.getElementById('clientsNav').style.display = isClient ? 'none' : '';
       document.getElementById('uploadNav').style.display = isClient ? 'none' : '';
       document.getElementById('usersNav').style.display = isClient ? 'none' : '';
+      document.getElementById('submissionsNav').style.display = isClient ? 'none' : '';
     }
 
     function setDemoRole(role) {
