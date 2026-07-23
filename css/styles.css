@@ -706,6 +706,12 @@ h4 { font-size: 1.1rem; }
 }
 .status-badge.sent::before { background: var(--info); }
 
+.status-badge.revision {
+  background: var(--warning-light);
+  color: #92400e;
+}
+.status-badge.revision::before { background: var(--warning); }
+
 /* ============ MODAL ============ */
 .modal-overlay {
   position: fixed;

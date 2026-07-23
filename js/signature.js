@@ -144,8 +144,8 @@ const SignatureService = {
 
       await db.collection(COLLECTIONS.SIGNATURES).doc(signatureId).set(signatureRecord);
 
-      // Update print card status
-      const newStatus = signerInfo.action === 'approved' ? 'approved' : 'rejected';
+      // Update print card status ('approved' | 'rejected' | 'revision')
+      const newStatus = signerInfo.action;
       await db.collection(COLLECTIONS.PRINT_CARDS).doc(printCardId).update({
         status: newStatus,
         lastSignatureId: signatureId,
@@ -169,11 +169,21 @@ const SignatureService = {
       const printCard = await db.collection(COLLECTIONS.PRINT_CARDS).doc(printCardId).get();
       if (printCard.exists) {
         const pcData = printCard.data();
+        const notifTitles = {
+          approved: 'Print Card Aprobado',
+          rejected: 'Print Card Rechazado',
+          revision: 'Cambios Solicitados'
+        };
+        const notifVerbs = {
+          approved: 'aprobado',
+          rejected: 'rechazado',
+          revision: 'solicitado cambios en'
+        };
         await db.collection(COLLECTIONS.NOTIFICATIONS).add({
           userId: pcData.uploadedBy,
           type: `printcard_${newStatus}`,
-          title: newStatus === 'approved' ? 'Print Card Aprobado' : 'Print Card Rechazado',
-          message: `${signerInfo.name} ha ${newStatus === 'approved' ? 'aprobado' : 'rechazado'} "${pcData.name}"`,
+          title: notifTitles[newStatus] || 'Actualizacion de Print Card',
+          message: `${signerInfo.name} ha ${notifVerbs[newStatus] || 'actualizado'} "${pcData.name}"`,
           printCardId,
           read: false,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
