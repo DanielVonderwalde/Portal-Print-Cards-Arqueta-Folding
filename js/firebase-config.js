@@ -38,12 +38,11 @@ const STORAGE_PATHS = {
 };
 
 // Web3Forms access key for sending emails to the admin recipients.
-// Get a free key at https://web3forms.com (register with the admin email),
-// then replace the placeholder below.
-const WEB3FORMS_KEY = 'YOUR_WEB3FORMS_ACCESS_KEY';
+// Public key (safe in client code), tied to daniel.vonderwalde@arquetaf.com.
+const WEB3FORMS_KEY = '7464ff36-bd28-429c-b872-698923ca23a5';
 
 // Default email that receives client document submissions (editable in-app).
-const DEFAULT_NOTIFY_EMAIL = 'danielvonderwalde@arquetaf.com';
+const DEFAULT_NOTIFY_EMAIL = 'daniel.vonderwalde@arquetaf.com';
 
 // Status constants
 const PRINT_CARD_STATUS = {
