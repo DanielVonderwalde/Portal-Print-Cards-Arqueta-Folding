@@ -6,7 +6,7 @@
   <title>Arqueta Folding - Print Card Approval</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=3">
+  <link rel="stylesheet" href="css/styles.css?v=4">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>ð</text></svg>">
 </head>
 <body>
@@ -280,6 +280,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
   <!-- PDF.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -290,10 +291,10 @@
   </script>
 
   <!-- App Scripts -->
-  <script src="js/firebase-config.js?v=3"></script>
-  <script src="js/utils.js?v=3"></script>
-  <script src="js/auth.js?v=3"></script>
-  <script src="js/signature.js?v=3"></script>
+  <script src="js/firebase-config.js?v=4"></script>
+  <script src="js/utils.js?v=4"></script>
+  <script src="js/auth.js?v=4"></script>
+  <script src="js/signature.js?v=4"></script>
 
   <script>
     // ============================================
@@ -629,7 +630,7 @@
 
       // Load PDF thumbnails
       cards.forEach(pc => {
-        if (pc.fileData) loadPDFThumbnail(pc.id, pc.fileData);
+        if (pc.fileURL) loadPDFThumbnail(pc.id, pc.fileURL);
       });
     }
 
@@ -859,7 +860,7 @@
         `;
 
         openModal('detailModal');
-        loadPDFViewer(pc.fileData);
+        loadPDFViewer(pc.fileURL);
         loadComments(id);
 
       } catch(e) {
@@ -990,13 +991,11 @@
       try {
         const file = selectedFiles[0];
 
-        // Firestore has a hard 1 MB per-document limit. The file is stored as a
-        // base64 data URL (~1.37x its raw size), so anything over ~700 KB will not
-        // fit and the write would hang forever. Fail fast with a clear message.
-        const MAX_FILE_BYTES = 700 * 1024; // ~700 KB raw
+        // Storage rules cap print card files at 60 MB. Reject bigger files up front.
+        const MAX_FILE_BYTES = 60 * 1024 * 1024; // 60 MB
         if (file.size > MAX_FILE_BYTES) {
           const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
-          Toast.show(`El archivo pesa ${sizeMB} MB. El maximo actual es ~700 KB. Comprime el PDF o contacta soporte.`, 'error');
+          Toast.show(`El archivo pesa ${sizeMB} MB. El maximo permitido es 60 MB.`, 'error');
           btn.disabled = false;
           btn.innerHTML = `${Icons.upload} Subir Print Card`;
           return;
@@ -1004,13 +1003,23 @@
 
         const pcId = db.collection(COLLECTIONS.PRINT_CARDS).doc().id;
 
-        // Read file as base64 data URL (no Firebase Storage needed)
-          const fileData = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = () => reject(new Error('Error reading file'));
-            reader.readAsDataURL(file);
-          });
+        // Upload the file to Firebase Storage (handles large PDFs; Firestore only
+        // stores the download URL, staying well under its 1 MB document limit).
+        const fileRef = storage.ref(`${STORAGE_PATHS.PRINT_CARDS}/${pcId}/${file.name}`);
+        const uploadTask = fileRef.put(file);
+
+        await new Promise((resolve, reject) => {
+          const uploadTimeout = setTimeout(() => reject(new Error('Tiempo de espera agotado. Verifica que Firebase Storage este habilitado (plan Blaze).')), 120000);
+          uploadTask.on('state_changed',
+            (snapshot) => {
+              const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+              btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;"></div> Subiendo... ' + progress + '%';
+            },
+            (error) => { clearTimeout(uploadTimeout); reject(error); },
+            () => { clearTimeout(uploadTimeout); resolve(); }
+          );
+        });
+        const fileURL = await fileRef.getDownloadURL();
 
         // Get client name
         const clientDoc = await db.collection(COLLECTIONS.CLIENTS).doc(clientId).get();
@@ -1028,7 +1037,7 @@
           clientId,
           clientName,
           fileName: file.name,
-          fileData,
+          fileURL,
           fileSize: file.size,
           fileType: file.type,
           status: 'draft',
@@ -1620,8 +1629,8 @@
     async function downloadPrintCard(id) {
       try {
         const doc = await db.collection(COLLECTIONS.PRINT_CARDS).doc(id).get();
-        if (doc.exists && doc.data().fileData) {
-          window.open(doc.data().fileData, '_blank');
+        if (doc.exists && doc.data().fileURL) {
+          window.open(doc.data().fileURL, '_blank');
         }
       } catch(e) {
         Toast.show('Error al descargar', 'error');

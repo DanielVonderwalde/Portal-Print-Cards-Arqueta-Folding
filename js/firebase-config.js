@@ -16,6 +16,7 @@ const firebaseConfig = {
 const app = firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+const storage = firebase.storage();
 
 // Collection names
 const COLLECTIONS = {
@@ -25,6 +26,12 @@ const COLLECTIONS = {
   SIGNATURES: 'signatures',
   NOTIFICATIONS: 'notifications',
   AUDIT_LOG: 'auditLog'
+};
+
+// Storage paths
+const STORAGE_PATHS = {
+  PRINT_CARDS: 'printcards',
+  SIGNATURES: 'signatures'
 };
 
 // Status constants
