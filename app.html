@@ -308,6 +308,14 @@
     let currentPrintCardId = null;
     let unsubscribeNotifications = null;
 
+    // ============================================
+    // DEMO MODE — no login. Auto sign-in anonymously and switch
+    // between Admin and Client with the floating toggle.
+    // Set DEMO_MODE = false to restore normal email/password login.
+    // ============================================
+    const DEMO_MODE = true;
+    let demoRole = 'admin'; // 'admin' | 'client'
+
     // Navigation
     function navigateTo(page) {
       currentPage = page;
@@ -360,7 +368,7 @@
       let totalPCs = 0, pendingPCs = 0, approvedPCs = 0, rejectedPCs = 0;
       try {
         let query = db.collection(COLLECTIONS.PRINT_CARDS);
-        if (isClient) {
+        if (isClient && !DEMO_MODE) {
           query = query.where('clientId', '==', Auth.currentUser.uid);
         }
         const snapshot = await query.get();
@@ -481,7 +489,7 @@
           .orderBy('createdAt', 'desc')
           .limit(10);
 
-        if (isClient) {
+        if (isClient && !DEMO_MODE) {
           query = db.collection(COLLECTIONS.PRINT_CARDS)
             .where('clientId', '==', Auth.currentUser.uid)
             .orderBy('createdAt', 'desc')
@@ -581,7 +589,7 @@
     async function loadPrintCardsList(isClient) {
       try {
         let query = db.collection(COLLECTIONS.PRINT_CARDS).orderBy('createdAt', 'desc');
-        if (isClient) {
+        if (isClient && !DEMO_MODE) {
           query = db.collection(COLLECTIONS.PRINT_CARDS)
             .where('clientId', '==', Auth.currentUser.uid)
             .orderBy('createdAt', 'desc');
@@ -1776,7 +1784,90 @@
     });
 
     Toast.init();
-    Auth.init();
+
+    // ============================================
+    // DEMO MODE BOOTSTRAP
+    // ============================================
+    function buildDemoProfile() {
+      Auth.userProfile = {
+        id: Auth.currentUser ? Auth.currentUser.uid : 'demo',
+        name: demoRole === 'admin' ? 'Admin (Demo)' : 'Cliente (Demo)',
+        email: 'demo@arquetaf.com',
+        role: demoRole,
+        company: 'Arqueta Folding'
+      };
+    }
+
+    function refreshRoleUI() {
+      updateSidebarInfo();
+      const isClient = Auth.userProfile.role === 'client';
+      document.getElementById('adminSection').style.display = isClient ? 'none' : '';
+      document.getElementById('clientsNav').style.display = isClient ? 'none' : '';
+      document.getElementById('uploadNav').style.display = isClient ? 'none' : '';
+      document.getElementById('usersNav').style.display = isClient ? 'none' : '';
+    }
+
+    function setDemoRole(role) {
+      demoRole = role;
+      isClientViewActive = false;
+      const banner = document.getElementById('clientViewBanner');
+      if (banner) banner.remove();
+      buildDemoProfile();
+      refreshRoleUI();
+      updateDemoToggleUI();
+      navigateTo('dashboard');
+    }
+
+    function updateDemoToggleUI() {
+      const a = document.getElementById('demoAdminBtn');
+      const c = document.getElementById('demoClientBtn');
+      if (!a || !c) return;
+      const on = 'background:#fff; color:#1a2332;';
+      const off = 'background:transparent; color:#fff;';
+      const base = 'border:none; border-radius:8px; padding:6px 14px; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s;';
+      a.style.cssText = base + (demoRole === 'admin' ? on : off);
+      c.style.cssText = base + (demoRole === 'client' ? on : off);
+    }
+
+    function injectDemoToggle() {
+      if (document.getElementById('demoToggle')) return;
+      const bar = document.createElement('div');
+      bar.id = 'demoToggle';
+      bar.style.cssText = 'position:fixed; bottom:18px; right:18px; z-index:10000; background:#1a2332; border-radius:12px; padding:8px 10px; display:flex; gap:6px; align-items:center; box-shadow:0 6px 20px rgba(0,0,0,.28); font-family:inherit;';
+      bar.innerHTML = `
+        <span style="color:#9ca3af; font-size:12px; font-weight:600; padding:0 4px;">MODO DEMO</span>
+        <button id="demoAdminBtn" onclick="setDemoRole('admin')">Admin</button>
+        <button id="demoClientBtn" onclick="setDemoRole('client')">Cliente</button>
+      `;
+      document.body.appendChild(bar);
+      updateDemoToggleUI();
+    }
+
+    async function startDemoMode() {
+      try {
+        if (!auth.currentUser) await auth.signInAnonymously();
+      } catch (e) {
+        console.error('Anonymous sign-in failed:', e);
+        Toast.show('No se pudo iniciar modo demo. Habilita Anonymous Auth en Firebase.', 'error');
+        return;
+      }
+      Auth.currentUser = auth.currentUser;
+      buildDemoProfile();
+
+      // Show the app (mirrors Auth.onAuthenticated without the login gate)
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('appLayout').style.display = 'flex';
+      injectDemoToggle();
+      refreshRoleUI();
+      setupNotificationListener();
+      navigateTo('dashboard');
+    }
+
+    if (DEMO_MODE) {
+      startDemoMode();
+    } else {
+      Auth.init();
+    }
   </script>
 </body>
 </html>
