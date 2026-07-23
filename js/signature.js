@@ -200,12 +200,15 @@ const SignatureService = {
   // Get signatures for a print card
   async getSignatures(printCardId) {
     try {
+      // No orderBy on the query — that would require a composite index.
+      // The per-card result set is small, so sort in JS instead.
       const snapshot = await db.collection(COLLECTIONS.SIGNATURES)
         .where('printCardId', '==', printCardId)
-        .orderBy('signedAt', 'desc')
         .get();
 
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      return snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .sort((a, b) => (b.signedAt?.seconds || 0) - (a.signedAt?.seconds || 0));
     } catch (err) {
       console.error('Error fetching signatures:', err);
       return [];

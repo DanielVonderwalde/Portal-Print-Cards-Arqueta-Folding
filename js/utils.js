@@ -53,12 +53,15 @@ const AuditLog = {
 
   async getForPrintCard(printCardId) {
     try {
+      // No orderBy on the query — that would require a composite index.
+      // The per-card result set is small, so sort in JS instead.
       const snapshot = await db.collection(COLLECTIONS.AUDIT_LOG)
         .where('printCardId', '==', printCardId)
-        .orderBy('timestamp', 'desc')
         .get();
 
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      return snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
     } catch (err) {
       console.error('Error fetching audit log:', err);
       return [];
