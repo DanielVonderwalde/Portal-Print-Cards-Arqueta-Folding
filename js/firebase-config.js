@@ -27,7 +27,8 @@ const COLLECTIONS = {
   NOTIFICATIONS: 'notifications',
   AUDIT_LOG: 'auditLog',
   SUBMISSIONS: 'submissions',
-  SETTINGS: 'settings'
+  SETTINGS: 'settings',
+  PROJECTS: 'projects'
 };
 
 // Storage paths

@@ -6,7 +6,7 @@
   <title>Arqueta Folding - Print Card Approval</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css?v=8">
+  <link rel="stylesheet" href="css/styles.css?v=9">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>ð</text></svg>">
 </head>
 <body>
@@ -38,6 +38,9 @@
         </div>
 
         <div class="nav-section" id="adminSection">Gestion</div>
+        <div class="nav-item" data-page="projects" onclick="navigateTo('projects')" id="projectsNav">
+          <span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span> Proyectos
+        </div>
         <div class="nav-item" data-page="submissions" onclick="navigateTo('submissions')" id="submissionsNav">
           <span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></span> Documentos Recibidos
           <span class="badge" id="submissionsBadge" style="display:none;">0</span>
@@ -272,6 +275,34 @@
     </div>
   </div>
 
+  <!-- New Project Modal -->
+  <div class="modal-overlay" id="projectModal">
+    <div class="modal" style="max-width:500px;">
+      <div class="modal-header">
+        <h3>Nuevo Proyecto</h3>
+        <button class="modal-close" onclick="closeModal('projectModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Nombre del proyecto <span style="color:var(--danger);">*</span></label>
+          <input type="text" class="form-input" id="projName" placeholder="Ej: Solely Fruit Jerky 2026">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cliente</label>
+          <input type="text" class="form-input" id="projClient" placeholder="Ej: Bimfasa">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descripcion</label>
+          <textarea class="form-textarea" id="projDescription" rows="2" placeholder="Notas del proyecto..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('projectModal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="createProject()">Crear Proyecto</button>
+      </div>
+    </div>
+  </div>
+
   <!-- New Client Modal -->
   <div class="modal-overlay" id="clientModal">
     <div class="modal" style="max-width:500px;">
@@ -322,10 +353,10 @@
   </script>
 
   <!-- App Scripts -->
-  <script src="js/firebase-config.js?v=8"></script>
-  <script src="js/utils.js?v=8"></script>
-  <script src="js/auth.js?v=8"></script>
-  <script src="js/signature.js?v=8"></script>
+  <script src="js/firebase-config.js?v=9"></script>
+  <script src="js/utils.js?v=9"></script>
+  <script src="js/auth.js?v=9"></script>
+  <script src="js/signature.js?v=9"></script>
 
   <script>
     // ============================================
@@ -365,6 +396,7 @@
         users: 'Usuarios',
         submit: 'Enviar Documentos',
         submissions: 'Documentos Recibidos',
+        projects: 'Proyectos',
         settings: 'Configuracion'
       };
       document.getElementById('breadcrumb').innerHTML = `
@@ -386,6 +418,7 @@
         case 'users': renderUsers(container); break;
         case 'submit': renderSubmit(container); break;
         case 'submissions': renderSubmissions(container); break;
+        case 'projects': renderProjects(container); break;
         case 'settings': renderSettings(container); break;
         default: renderDashboard(container);
       }
@@ -1726,11 +1759,15 @@ ${fileLines}
     async function renderSubmissions(container) {
       container.innerHTML = `<h1 style="margin-bottom:var(--space-xl);">Documentos Recibidos</h1><div id="submissionsList"><p style="color:var(--gray-400);">Cargando...</p></div>`;
       try {
-        const snap = await db.collection(COLLECTIONS.SUBMISSIONS).get();
+        const [snap, projects] = await Promise.all([
+          db.collection(COLLECTIONS.SUBMISSIONS).get(),
+          getProjectsList()
+        ]);
         const subs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
           .sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
         const list = document.getElementById('submissionsList');
         if (!subs.length) { list.innerHTML = `<div class="empty-state"><h3>No hay documentos aun</h3><p>Cuando un cliente envie archivos apareceran aqui.</p></div>`; return; }
+        const projOptions = (sel) => `<option value="">Sin proyecto</option>` + projects.map(p => `<option value="${p.id}" ${sel===p.id?'selected':''}>${p.name}</option>`).join('');
         list.innerHTML = subs.map(s => `
           <div class="card" style="margin-bottom:16px;">
             <div class="card-body">
@@ -1744,6 +1781,10 @@ ${fileLines}
               ${s.message ? `<p style="margin:12px 0; font-size:0.9375rem; white-space:pre-wrap;">${s.message}</p>` : ''}
               <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">
                 ${(s.files||[]).map(f => `<a href="${f.url}" target="_blank" class="btn btn-outline btn-sm">${Icons.download} ${f.name}</a>`).join('')}
+              </div>
+              <div style="display:flex; align-items:center; gap:8px; margin-top:14px; padding-top:12px; border-top:1px solid var(--gray-100);">
+                <span style="font-size:0.8125rem; color:var(--gray-500);">Proyecto:</span>
+                <select class="form-select" style="max-width:260px;" onchange="assignSubmissionToProject('${s.id}', this.value)">${projOptions(s.projectId)}</select>
               </div>
             </div>
           </div>
@@ -1801,6 +1842,240 @@ ${fileLines}
       await saveNotifyRecipients(list);
       Toast.show('Correo quitado', 'success');
       loadRecipientsUI();
+    }
+
+    // ============================================
+    // PROJECTS — group print cards + client documents
+    // ============================================
+
+    let currentProjectId = null;
+
+    async function getProjectsList() {
+      try {
+        const snap = await db.collection(COLLECTIONS.PROJECTS).get();
+        return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+          .sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+      } catch(e) { console.error(e); return []; }
+    }
+
+    // Drag & drop state
+    let _dragItem = null;
+    function dragStart(ev, type, id) {
+      _dragItem = { type, id };
+      ev.dataTransfer.effectAllowed = 'move';
+      try { ev.dataTransfer.setData('text/plain', type + ':' + id); } catch(e) {}
+      if (ev.target && ev.target.classList) ev.target.classList.add('dragging');
+    }
+    function dragEnd(ev) { if (ev.target && ev.target.classList) ev.target.classList.remove('dragging'); }
+    function allowDrop(ev) { ev.preventDefault(); ev.dataTransfer.dropEffect = 'move'; const c = ev.currentTarget; if (c) c.classList.add('drop-hover'); }
+    function dragLeaveBucket(ev) { const c = ev.currentTarget; if (c) c.classList.remove('drop-hover'); }
+    async function dropToBucket(ev, projectId) {
+      ev.preventDefault();
+      const c = ev.currentTarget; if (c) c.classList.remove('drop-hover');
+      let item = _dragItem;
+      if (!item) { const d = (ev.dataTransfer.getData('text/plain')||'').split(':'); if (d.length===2) item = { type:d[0], id:d[1] }; }
+      _dragItem = null;
+      if (!item) return;
+      if (item.type === 'pc') await assignPrintCardToProject(item.id, projectId);
+      else await assignSubmissionToProject(item.id, projectId);
+    }
+
+    function projectItemCard(item) {
+      if (item.type === 'pc') {
+        return `<div class="proj-item" draggable="true" ondragstart="dragStart(event,'pc','${item.id}')" ondragend="dragEnd(event)" onclick="viewPrintCard('${item.id}')">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="width:30px; height:30px; border-radius:6px; overflow:hidden; background:var(--gray-100); display:flex; align-items:center; justify-content:center; flex-shrink:0;">${item.thumbnail ? `<img src="${item.thumbnail}" style="width:100%;height:100%;object-fit:cover;">` : Icons.printCard}</div>
+            <div style="min-width:0;"><div style="font-weight:600; font-size:0.8125rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${truncate(item.name, 26)}</div><span class="status-badge ${item.status}" style="font-size:0.65rem;">${statusLabel(item.status)}</span></div>
+          </div>
+        </div>`;
+      }
+      return `<div class="proj-item" draggable="true" ondragstart="dragStart(event,'sub','${item.id}')" ondragend="dragEnd(event)">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="width:30px; height:30px; border-radius:6px; background:var(--warning-light); color:#92400e; display:flex; align-items:center; justify-content:center; flex-shrink:0;">${Icons.download}</div>
+          <div style="min-width:0;"><div style="font-weight:600; font-size:0.8125rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${truncate(item.subject || '(arte)', 26)}</div><div style="font-size:0.7rem; color:var(--gray-500);">${item.senderName || 'Cliente'} · ${(item.files||[]).length} arch.</div></div>
+        </div>
+      </div>`;
+    }
+
+    function projectBucketHtml(title, subtitle, projectId, items, isUnassigned) {
+      return `
+        <div class="proj-column" ondragover="allowDrop(event)" ondragleave="dragLeaveBucket(event)" ondrop="dropToBucket(event, '${projectId}')">
+          <div class="proj-column-head">
+            <div style="font-weight:700;">${title}</div>
+            ${subtitle ? `<div style="font-size:0.72rem; color:var(--gray-500);">${subtitle}</div>` : ''}
+            <div style="font-size:0.72rem; color:var(--gray-400); margin-top:2px;">${items.length} elemento(s)</div>
+          </div>
+          <div class="proj-column-body">
+            ${items.length ? items.map(projectItemCard).join('') : `<div class="proj-empty">${isUnassigned ? 'Todo asignado' : 'Arrastra aqui print cards y artes'}</div>`}
+          </div>
+        </div>`;
+    }
+
+    async function renderProjects(container) {
+      currentProjectId = null;
+      container.innerHTML = `
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+          <h1>Proyectos</h1>
+          <button class="btn btn-primary" onclick="openModal('projectModal')">${Icons.plus} Nuevo Proyecto</button>
+        </div>
+        <p style="color:var(--gray-500); margin-bottom:var(--space-lg);">Arrastra los print cards y artes hacia el proyecto (bucket) al que pertenecen.</p>
+        <div id="projectsBoard"><p style="color:var(--gray-400);">Cargando...</p></div>
+      `;
+      try {
+        const [projects, pcSnap, subSnap] = await Promise.all([
+          getProjectsList(),
+          db.collection(COLLECTIONS.PRINT_CARDS).get(),
+          db.collection(COLLECTIONS.SUBMISSIONS).get()
+        ]);
+        const pcs = pcSnap.docs.map(d => ({ type:'pc', id:d.id, ...d.data() }));
+        const subs = subSnap.docs.map(d => ({ type:'sub', id:d.id, ...d.data() }));
+        const all = [...pcs, ...subs];
+        const byProject = (pid) => all.filter(i => (i.projectId||'') === pid);
+
+        const board = document.getElementById('projectsBoard');
+        let html = projectBucketHtml('Sin asignar', 'Arrastra desde aqui', '', byProject(''), true);
+        html += projects.map(p => projectBucketHtml(p.name, p.client || '', p.id, byProject(p.id), false)).join('');
+        board.innerHTML = `<div class="proj-board">${html}</div>`;
+      } catch(e) {
+        console.error(e);
+        const board = document.getElementById('projectsBoard');
+        if (board) board.innerHTML = '<p style="color:var(--danger);">Error cargando proyectos</p>';
+      }
+    }
+
+    async function createProject() {
+      const name = document.getElementById('projName').value.trim();
+      const client = document.getElementById('projClient').value.trim();
+      const description = document.getElementById('projDescription').value.trim();
+      if (!name) { Toast.show('Ingresa un nombre de proyecto', 'warning'); return; }
+      try {
+        await db.collection(COLLECTIONS.PROJECTS).add({
+          name, client, description,
+          status: 'activo',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          createdBy: Auth.currentUser.uid
+        });
+        Toast.show('Proyecto creado', 'success');
+        closeModal('projectModal');
+        document.getElementById('projName').value = '';
+        document.getElementById('projClient').value = '';
+        document.getElementById('projDescription').value = '';
+        navigateTo('projects');
+      } catch(e) { console.error(e); Toast.show('Error al crear el proyecto', 'error'); }
+    }
+
+    async function openProject(id) {
+      currentProjectId = id;
+      const container = document.getElementById('pageContent');
+      container.innerHTML = `<p style="color:var(--gray-400);">Cargando proyecto...</p>`;
+      try {
+        const [projDoc, pcSnap, subSnap] = await Promise.all([
+          db.collection(COLLECTIONS.PROJECTS).doc(id).get(),
+          db.collection(COLLECTIONS.PRINT_CARDS).where('projectId','==',id).get(),
+          db.collection(COLLECTIONS.SUBMISSIONS).where('projectId','==',id).get()
+        ]);
+        if (!projDoc.exists) { container.innerHTML = '<p>Proyecto no encontrado.</p>'; return; }
+        const p = projDoc.data();
+        const pcs = pcSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+        const subs = subSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+
+        container.innerHTML = `
+          <div style="margin-bottom:var(--space-lg);">
+            <span style="cursor:pointer; color:var(--gray-500); font-size:0.875rem;" onclick="navigateTo('projects')">${Icons.chevronRight ? '&larr;' : ''} Volver a Proyectos</span>
+          </div>
+          <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:var(--space-xl);">
+            <div>
+              <h1 style="margin-bottom:6px;">${p.name}</h1>
+              <p style="color:var(--gray-500);">${p.client || 'Sin cliente'}${p.description ? ' &middot; ' + p.description : ''}</p>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:20px;">
+            <div class="card-header" style="display:flex; align-items:center; justify-content:space-between;">
+              <h3>Print Cards (${pcs.length})</h3>
+            </div>
+            <div class="card-body">
+              ${pcs.length ? pcs.map(pc => `
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid var(--gray-100);">
+                  <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="viewPrintCard('${pc.id}')">
+                    <div style="width:34px; height:34px; border-radius:8px; overflow:hidden; background:var(--gray-100); display:flex; align-items:center; justify-content:center; flex-shrink:0;">${pc.thumbnail ? `<img src="${pc.thumbnail}" style="width:100%;height:100%;object-fit:cover;">` : Icons.printCard}</div>
+                    <div><div style="font-weight:600; font-size:0.875rem;">${truncate(pc.name, 40)}</div><span class="status-badge ${pc.status}" style="margin-top:2px;">${statusLabel(pc.status)}</span></div>
+                  </div>
+                  <button class="btn btn-ghost btn-sm" style="color:var(--danger);" onclick="assignPrintCardToProject('${pc.id}', '')">Quitar</button>
+                </div>
+              `).join('') : '<p style="color:var(--gray-400); font-size:0.875rem;">Ningun print card en este proyecto todavia.</p>'}
+              <div style="margin-top:14px; display:flex; gap:8px; align-items:center;">
+                <select class="form-select" id="addPcSelect" style="flex:1;"><option value="">Agregar print card existente...</option></select>
+                <button class="btn btn-outline btn-sm" onclick="addSelectedPrintCard()">Agregar</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>Documentos del Cliente (${subs.length})</h3></div>
+            <div class="card-body">
+              ${subs.length ? subs.map(s => `
+                <div style="padding:10px 0; border-bottom:1px solid var(--gray-100);">
+                  <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                    <div><div style="font-weight:600; font-size:0.875rem;">${s.subject || '(sin asunto)'}</div><div style="font-size:0.75rem; color:var(--gray-500);">${s.senderName || '-'} &middot; ${formatDate(s.createdAt)}</div></div>
+                    <button class="btn btn-ghost btn-sm" style="color:var(--danger);" onclick="assignSubmissionToProject('${s.id}', '')">Quitar</button>
+                  </div>
+                  <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">${(s.files||[]).map(f => `<a href="${f.url}" target="_blank" class="btn btn-outline btn-sm">${Icons.download} ${f.name}</a>`).join('')}</div>
+                </div>
+              `).join('') : '<p style="color:var(--gray-400); font-size:0.875rem;">Ningun documento en este proyecto todavia.</p>'}
+              <div style="margin-top:14px; display:flex; gap:8px; align-items:center;">
+                <select class="form-select" id="addSubSelect" style="flex:1;"><option value="">Agregar documento existente...</option></select>
+                <button class="btn btn-outline btn-sm" onclick="addSelectedSubmission()">Agregar</button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Populate "add existing" dropdowns with unassigned items
+        const allPc = await db.collection(COLLECTIONS.PRINT_CARDS).get();
+        const pcSel = document.getElementById('addPcSelect');
+        allPc.docs.filter(d => !d.data().projectId).forEach(d => {
+          const o = document.createElement('option'); o.value = d.id; o.textContent = truncate(d.data().name || d.id, 50); pcSel.appendChild(o);
+        });
+        const allSub = await db.collection(COLLECTIONS.SUBMISSIONS).get();
+        const subSel = document.getElementById('addSubSelect');
+        allSub.docs.filter(d => !d.data().projectId).forEach(d => {
+          const o = document.createElement('option'); o.value = d.id; o.textContent = (d.data().subject || d.id) + ' - ' + (d.data().senderName||''); subSel.appendChild(o);
+        });
+      } catch(e) { console.error(e); container.innerHTML = '<p style="color:var(--danger);">Error cargando el proyecto</p>'; }
+    }
+
+    function addSelectedPrintCard() {
+      const id = document.getElementById('addPcSelect').value;
+      if (!id) { Toast.show('Selecciona un print card', 'warning'); return; }
+      assignPrintCardToProject(id, currentProjectId);
+    }
+    function addSelectedSubmission() {
+      const id = document.getElementById('addSubSelect').value;
+      if (!id) { Toast.show('Selecciona un documento', 'warning'); return; }
+      assignSubmissionToProject(id, currentProjectId);
+    }
+
+    function refreshProjectViews() {
+      if (currentProjectId) openProject(currentProjectId);
+      else if (currentPage === 'projects') renderProjects(document.getElementById('pageContent'));
+      else if (currentPage === 'submissions') renderSubmissions(document.getElementById('pageContent'));
+    }
+
+    async function assignPrintCardToProject(pcId, projectId) {
+      try {
+        await db.collection(COLLECTIONS.PRINT_CARDS).doc(pcId).update({ projectId: projectId || null });
+        Toast.show(projectId ? 'Print card agregado al proyecto' : 'Print card quitado del proyecto', 'success');
+        refreshProjectViews();
+      } catch(e) { console.error(e); Toast.show('Error al asignar', 'error'); }
+    }
+
+    async function assignSubmissionToProject(subId, projectId) {
+      try {
+        await db.collection(COLLECTIONS.SUBMISSIONS).doc(subId).update({ projectId: projectId || null });
+        Toast.show(projectId ? 'Documento agregado al proyecto' : 'Documento quitado del proyecto', 'success');
+        refreshProjectViews();
+      } catch(e) { console.error(e); Toast.show('Error al asignar', 'error'); }
     }
 
     // ============================================
@@ -2178,6 +2453,7 @@ ${fileLines}
       document.getElementById('uploadNav').style.display = isClient ? 'none' : '';
       document.getElementById('usersNav').style.display = isClient ? 'none' : '';
       document.getElementById('submissionsNav').style.display = isClient ? 'none' : '';
+      document.getElementById('projectsNav').style.display = isClient ? 'none' : '';
     }
 
     function setDemoRole(role) {
